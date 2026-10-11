@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>signal detected</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#000;cursor:grab}
+body.dragging{cursor:grabbing}
+body.demo-mode{cursor:none}
+body.demo-mode #terminal,body.demo-mode #overlay,body.demo-mode #shapePalette,body.demo-mode #stats,body.demo-mode #hint,body.demo-mode #themeIndicator,body.demo-mode #trailCanvas,body.demo-mode #vignette,body.demo-mode #filmGrain,body.demo-mode #chromAb,body.demo-mode #weatherCanvas,body.demo-mode #sortCanvas,body.demo-mode #navLeft,body.demo-mode #navRight,body.demo-mode #reactorTerminal,body.demo-mode #reactorStatus,body.demo-mode #slotsPanel,body.demo-mode #skillTree,body.demo-mode #studioHelpPanel,body.demo-mode #exportLabel,body.demo-mode #odWarn,body.demo-mode #odFlash{display:none!important;opacity:0!important;visibility:hidden!important}
+body.demo-mode .gui-window,body.demo-mode .transmission{display:none!important}
+#demoHud{display:none;position:fixed;top:16px;left:18px;z-index:120;pointer-events:none;font-family:'Consolas',monospace;font-size:12px;line-height:1.7;color:rgba(180,255,255,0.88);text-shadow:0 0 12px rgba(43,208,208,0.35)}
+body.demo-mode #demoHud{display:block}
+/* ── there is no cube (step 1): UI is DELETED while playing, not hidden ── */
+body.ng-mode{background:#000;overflow:hidden;cursor:crosshair}
+body.ng-mode .transmission,body.ng-mode .gui-window{display:none!important}
+#ngOverlay{position:fixed;inset:0;z-index:2000;background:radial-gradient(ellipse at 50% 28%,#0a0e16 0%,#05060a 72%);display:flex;flex-direction:column;align-items:center;font-family:Georgia,serif;animation:ngIn .5s ease-out}
+@keyframes ngIn{from{opacity:0}to{opacity:1}}
+#ngObj{width:100%;text-align:center;padding:26px 20px 18px;color:#d8e6f2;font-size:19px;letter-spacing:1px;min-height:76px;border-bottom:1px solid rgba(43,208,208,0.25);background:linear-gradient(180deg,rgba(12,18,26,0.88),rgba(6,9,14,0.72));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 1px 0 rgba(43,208,208,0.08),0 10px 28px rgba(0,0,0,0.45);position:relative;z-index:5}
+#ngObj .who{color:#2bd0d0;text-shadow:0 0 10px rgba(43,208,208,0.55)}
+.ngCoreOrb{width:110px;height:110px;margin:4px auto 2px;border-radius:50%;background:radial-gradient(circle at 50% 42%,#ffd7ec 0%,#ff9ecd 28%,#7a2d5a 62%,#12060e 100%);box-shadow:0 0 34px rgba(255,158,207,0.55),0 0 90px rgba(255,158,207,0.25);animation:corePulse 3.2s ease-in-out infinite}
+@keyframes corePulse{0%,100%{transform:scale(1);box-shadow:0 0 34px rgba(255,158,207,0.55),0 0 90px rgba(255,158,207,0.25)}50%{transform:scale(1.06);box-shadow:0 0 52px rgba(255,190,220,0.8),0 0 120px rgba(255,158,207,0.35)}}
+#ngSeqShow{transition:text-shadow .18s ease}
+#ngSeqShow.ngSeqGlow{text-shadow:0 0 14px #ffd7ec,0 0 34px #ff9ecd,0 0 70px rgba(255,158,207,0.8)}
+.ngGlitchIn{animation:glitchIn .38s steps(2) both}
+@keyframes glitchIn{0%{transform:translate(-6px,2px);filter:hue-rotate(90deg) saturate(3);opacity:0}30%{transform:translate(5px,-3px);filter:none;opacity:1}55%{transform:translate(-3px,1px) skewX(6deg)}80%{transform:translate(2px,0)}100%{transform:none}}
+.ngDreamKiller{font-family:Consolas,monospace;font-size:64px;letter-spacing:10px;color:#ff2244;text-align:center;margin:6px 0;text-shadow:-3px 0 #00e5ff,3px 0 #ff00aa;animation:killerJitter .3s steps(2) infinite}
+@keyframes killerJitter{0%{transform:translate(0) skewX(0)}25%{transform:translate(-4px,2px) skewX(4deg)}50%{transform:translate(4px,-2px)}75%{transform:translate(-2px,-2px) skewX(-4deg)}100%{transform:translate(0)}}
+.ngDreamFxA{position:absolute;inset:0;pointer-events:none}
+.ngDreamVig{background:radial-gradient(ellipse at center,transparent 38%,rgba(180,0,0,0.6) 100%);animation:vigPulse 1s ease-in-out infinite}
+@keyframes vigPulse{50%{opacity:.35}}
+.ngDreamRust{background:radial-gradient(ellipse at center,rgba(120,60,10,0.15) 0%,rgba(150,70,10,0.55) 100%);animation:rustSpread 2.4s ease-in forwards}
+@keyframes rustSpread{from{opacity:0;transform:scale(1.35)}to{opacity:1;transform:scale(1)}}
+.ngDreamShred{background:repeating-linear-gradient(90deg,transparent 0 26px,rgba(0,0,0,0.88) 26px 34px);animation:shredSlide .45s linear infinite}
+@keyframes shredSlide{to{transform:translateX(34px)}}
+.ngDreamFlash{background:#fff;animation:flashFade .6s ease-out forwards}
+@keyframes flashFade{from{opacity:.9}to{opacity:0}}
+.ngDreamPhoneGlow{animation:phoneRing .5s ease-in-out infinite}
+@keyframes phoneRing{50%{box-shadow:0 0 26px rgba(255,233,168,0.95)}}
+.ngDreamSnow{background:repeating-linear-gradient(115deg,rgba(200,220,255,0.07) 0 3px,transparent 3px 9px);animation:snowDrift 1.2s linear infinite}
+@keyframes snowDrift{to{transform:translate(-36px,36px)}}
+#ngDreamMain .ngtopt{width:auto!important;min-width:220px;max-width:88vw;padding:10px 26px;white-space:nowrap}
+#ngJbo{width:100%;text-align:center;padding:10px 20px 14px;color:#ffd8b0;font-size:18px;letter-spacing:1px;border-bottom:1px solid rgba(255,138,42,0.3);min-height:20px;display:none;background:linear-gradient(180deg,rgba(26,16,8,0.85),rgba(14,9,5,0.7));box-shadow:0 8px 22px rgba(0,0,0,0.4)}
+#ngJbo .who{color:#ff8a2a;font-weight:bold;text-shadow:0 0 10px rgba(255,138,42,0.5)}
+#ngCore{width:100%;text-align:center;padding:10px 20px 14px;color:#f5d8e8;font-size:18px;letter-spacing:1px;border-bottom:1px solid rgba(255,158,207,0.3);min-height:20px;display:none;background:linear-gradient(180deg,rgba(26,10,20,0.85),rgba(14,6,11,0.7));box-shadow:0 8px 22px rgba(0,0,0,0.4)}
+#ngLandlord{width:100%;text-align:center;padding:10px 20px 14px;color:#f0dfb8;font-size:18px;letter-spacing:1px;border-bottom:1px solid rgba(216,169,64,0.3);min-height:20px;display:none;background:linear-gradient(180deg,rgba(26,20,8,0.85),rgba(14,11,5,0.7));box-shadow:0 8px 22px rgba(0,0,0,0.4)}
+#ngLandlord .who{color:#d8a940;font-weight:bold;text-shadow:0 0 10px rgba(216,169,64,0.5)}
+#ngCore .who{color:#ff9ecf;text-shadow:0 0 10px rgba(255,158,207,0.5)}
+#ngOverlay.sprint #ngObj,#ngOverlay.sprint #ngJbo,#ngOverlay.sprint #ngCore,#ngOverlay.sprint #ngLandlord{display:none}
+#ngStage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:100%}
+#ngTitle{color:#eef4fa;font-size:34px;letter-spacing:8px;text-shadow:0 0 20px rgba(120,180,255,0.35),0 0 54px rgba(80,140,220,0.22)}
+#ngSub{color:#8fa4bc;font-size:13px;letter-spacing:2px;text-shadow:0 0 10px rgba(120,160,220,0.28)}
+#ngBtn{background:linear-gradient(180deg,rgba(46,22,26,0.82),rgba(24,12,14,0.88));border:1px solid rgba(200,120,120,0.5);color:#e8a8a8;font-family:Georgia,serif;font-size:15px;letter-spacing:3px;padding:12px 34px;cursor:pointer;border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,190,190,0.12),0 8px 20px rgba(0,0,0,0.45);transition:all .18s}
+#ngBtn:hover{border-color:#e89a9a;background:linear-gradient(180deg,rgba(66,30,34,0.9),rgba(36,17,19,0.92));color:#ffd0d0;box-shadow:inset 0 1px 0 rgba(255,200,200,0.18),0 0 18px rgba(200,120,120,0.35),0 10px 24px rgba(0,0,0,0.5);transform:translateY(-1px)}
+.ng-shatter{animation:ngBreak .3s forwards!important;pointer-events:none}
+@keyframes ngBreak{40%{transform:scale(1.25) rotate(-8deg);opacity:1}100%{transform:scale(0) rotate(40deg);opacity:0}}
+#ngLeave{position:fixed;bottom:14px;right:18px;color:#6a7a8c;font-size:11px;letter-spacing:2px;cursor:pointer;font-family:'Consolas',monospace;z-index:2001;transition:all .15s}
+#ngLeave:hover{color:#c8d8ea;text-shadow:0 0 10px rgba(120,180,255,0.4)}
+#ngFlash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:3000}
+#ngFlash.go{animation:ngFlashA .9s ease-out}
+@keyframes ngFlashA{0%{opacity:0}15%{opacity:.85}100%{opacity:0}}
+#ngStage.errpage{font-family:'Consolas',monospace}
+.ngProp{border:1px solid rgba(90,120,160,0.45);color:#b8cade;padding:14px 26px;letter-spacing:2px;font-size:15px;cursor:pointer;background:linear-gradient(180deg,rgba(24,30,42,0.88),rgba(13,17,25,0.92));border-radius:9px;user-select:none;text-align:center;transition:all .18s;box-shadow:inset 0 1px 0 rgba(180,210,255,0.08),0 8px 20px rgba(0,0,0,0.4)}
+#ngStage{position:relative}
+.ngDecoy{position:absolute;z-index:5;border-style:dashed!important;animation:ngWobble 1s ease-in-out infinite}
+@keyframes ngWobble{50%{transform:rotate(-1.5deg) scale(1.03)}}
+.ngProp:hover{border-color:#7a93ad;color:#dceaf8;box-shadow:inset 0 1px 0 rgba(180,210,255,0.12),0 0 16px rgba(90,140,200,0.28),0 10px 24px rgba(0,0,0,0.45);transform:translateY(-1px)}
+.ngProp.big{font-size:22px;color:#f0a4a4;border-color:rgba(200,120,120,0.6);letter-spacing:4px;text-shadow:0 0 12px rgba(200,120,120,0.4)}
+.ngProp.big:hover{border-color:#e89a9a;box-shadow:inset 0 1px 0 rgba(255,200,200,0.14),0 0 20px rgba(200,120,120,0.4),0 10px 24px rgba(0,0,0,0.45)}
+.ngBarBg{width:220px;height:12px;border:1px solid rgba(90,120,160,0.5);border-radius:7px;overflow:hidden;margin:0 auto 8px;background:rgba(8,12,18,0.8);box-shadow:inset 0 2px 6px rgba(0,0,0,0.5)}
+.ngBarFill{width:99%;height:100%;background:linear-gradient(90deg,#2bd0d0,#5ad0ff);box-shadow:0 0 12px rgba(43,208,208,0.55),inset 0 1px 0 rgba(255,255,255,0.35)}
+.ngBarLbl{font-size:11px;color:#8fa4bc;text-shadow:0 0 8px rgba(120,160,220,0.3)}
+#ngDoor{display:flex;flex-direction:column;align-items:center;gap:16px;padding:12px;cursor:pointer;user-select:none;transition:transform .18s}
+#ngDoor:hover{transform:translateY(-3px)}
+.ngDoorFrame{width:150px;height:230px;border:3px solid rgba(200,120,120,0.55);border-radius:8px 8px 0 0;position:relative;background:linear-gradient(180deg,rgba(60,26,30,0.35),rgba(18,9,11,0.62));display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;box-shadow:inset 0 0 26px rgba(0,0,0,0.55),0 12px 30px rgba(0,0,0,0.5);transition:all .2s}
+#ngDoor:hover .ngDoorFrame{border-color:#e89a9a;box-shadow:inset 0 0 26px rgba(0,0,0,0.55),0 0 24px rgba(200,120,120,0.35),0 14px 34px rgba(0,0,0,0.5)}
+.ngDoorPanel{width:62%;height:20%;border:1px solid rgba(200,120,120,0.4);border-radius:3px;background:rgba(255,180,180,0.05);box-shadow:inset 0 1px 0 rgba(255,200,200,0.12)}
+.ngKnob{position:absolute;right:14px;top:56%;width:12px;height:12px;border-radius:50%;background:#e8a0a0;box-shadow:0 0 12px rgba(200,120,120,0.85);transition:box-shadow .2s}
+#ngDoor:hover .ngKnob{box-shadow:0 0 20px rgba(255,150,150,1)}
+.ngDoorFrame.locked::after{content:'';position:absolute;left:-10px;right:-10px;top:48%;height:12px;background:repeating-linear-gradient(45deg,#6a4444,#6a4444 6px,#3a2424 6px,#3a2424 12px);border:1px solid #7a4a4a;transform:rotate(-4deg)}
+.ngw{color:rgba(200,255,210,0.88);font-size:13px;font-family:Consolas,monospace;margin:6px 0;cursor:pointer;padding:2px 6px;border-radius:5px;transition:all .14s}
+.ngw:hover{background:rgba(120,255,150,0.14);text-shadow:0 0 10px rgba(120,255,150,0.5)}
+.ngw.found{text-decoration:line-through;opacity:0.45}
+.ngd{position:absolute;color:rgba(255,255,255,0.75);font-size:13px;font-family:Consolas,monospace;cursor:pointer;padding:4px 8px;transform:translate(-50%,-50%)}
+.ngd:hover{color:#fff}
+.ngd.found{text-decoration:line-through;opacity:0.5}
+.ngsq{background:linear-gradient(180deg,rgba(30,16,24,0.85),rgba(18,9,14,0.9));border:1px solid rgba(255,158,207,0.45);color:#f8e0ea;font-size:20px;font-family:Consolas,monospace;padding:10px 16px;margin:3px;cursor:pointer;border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,210,230,0.1);transition:all .16s}
+.ngsq:hover{background:linear-gradient(180deg,rgba(46,24,36,0.92),rgba(26,13,20,0.94));border-color:#ffb8d4;box-shadow:0 0 16px rgba(255,158,207,0.4);transform:translateY(-1px)}
+.ngtopt{background:linear-gradient(180deg,rgba(30,14,20,0.85),rgba(18,8,12,0.9));border:1px solid rgba(255,60,120,0.45);color:rgba(255,190,208,0.92);font-size:14px;font-family:Consolas,monospace;padding:8px 16px;margin:3px;cursor:pointer;border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,170,190,0.1);transition:all .16s}
+.ngtopt:hover{background:linear-gradient(180deg,rgba(46,20,30,0.92),rgba(26,12,17,0.94));border-color:#ff7aa4;box-shadow:0 0 16px rgba(255,60,120,0.4);transform:translateY(-1px)}
+.ngEchoCard{display:block;width:100%;max-width:640px;text-align:left;white-space:normal;line-height:1.6;margin:6px 0;padding:12px 16px;letter-spacing:0.5px}
+.ngDoorLabel{color:#f0b0b0;font-size:22px;letter-spacing:6px;text-shadow:0 0 16px rgba(200,120,120,0.5),0 0 40px rgba(200,120,120,0.25)}
+.ngProp.ngDiploma{background:linear-gradient(180deg,#e8dcc0,#d6c6a4);border:2px solid #8a744a;padding:10px;border-radius:2px}
+.ngProp.ngDiploma:hover{border-color:#c87878}
+.ngDipInner{border:1px solid #8a744a;padding:22px 44px;text-align:center;position:relative}
+.ngDipTitle{font-family:Georgia,serif;color:#3a2c18;font-size:22px;letter-spacing:4px}
+.ngDipSub{font-family:Georgia,serif;color:#6a5a3a;font-size:12px;letter-spacing:2px;margin-top:8px}
+.ngSeal{position:absolute;right:14px;bottom:10px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e07878,#8a3030);box-shadow:0 0 8px rgba(138,48,48,.5)}
+#ngStage.talking{cursor:wait}
+#ngStage.talking .ngProp,#ngStage.talking #ngBtn,#ngStage.talking #ngCircle,#ngStage.talking #ngSquare,#ngStage.talking #ngSliderBg,#ngStage.talking #ngDoor,#ngStage.talking .ngBoxWrap,#ngStage.talking .ngCredName,#ngStage.talking .ngPortal{pointer-events:none;opacity:.55}
+.ngBoxWrap{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.ngBox{position:relative;background:linear-gradient(180deg,#7a5f36,#54401f);border:2px solid #9a7d4f}
+.ngBox.b1{width:120px;height:96px}
+.ngBox.b2{width:84px;height:68px}
+.ngBox.b3{width:52px;height:44px}
+.ngBox.b4{width:36px;height:30px}
+.ngBox.b5{width:24px;height:20px}
+.ngBox::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:12px;transform:translateX(-50%);background:rgba(225,205,160,.3)}
+.ngBox::after{content:'';position:absolute;top:50%;left:0;right:0;height:12px;transform:translateY(-50%);background:rgba(225,205,160,.3)}
+.ngBoxWrap:hover .ngBox{border-color:#c87878}
+.ngBoxLbl{color:#9fb2c5;letter-spacing:4px;font-size:15px;font-family:'Consolas',monospace}
+.ngBrokenImg{width:120px;height:90px;margin:0 auto 8px;background:#1a2230;border:1px solid #3a4552;border-radius:4px;position:relative;overflow:hidden}
+.ngBISun{position:absolute;left:14px;top:12px;width:18px;height:18px;border-radius:50%;background:#5a6a7a}
+.ngBIMtn{position:absolute;left:-10px;bottom:-24px;border-left:45px solid transparent;border-right:45px solid transparent;border-bottom:54px solid #2e3a4a}
+.ngCookie{width:70px;height:70px;margin:0 auto 8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#b57e3e,#7d5222 70%);position:relative}
+.ngCookie::before{content:'';position:absolute;left:20px;top:18px;width:8px;height:8px;border-radius:50%;background:#3a2210;box-shadow:22px 6px 0 #3a2210,8px 22px 0 #3a2210,28px 24px 0 #3a2210,-8px 14px 0 #3a2210}
+.ngArrowBadge{width:64px;height:64px;margin:0 auto 8px;border:2px solid #2bd0d0;border-radius:50%;color:#2bd0d0;font-size:34px;line-height:58px;text-align:center;font-family:Georgia,serif;box-shadow:0 0 16px rgba(43,208,208,0.35),inset 0 0 14px rgba(43,208,208,0.12)}
+#ngMenuBtn{position:fixed;top:14px;right:18px;color:#7a8a9a;font-size:22px;letter-spacing:2px;cursor:pointer;z-index:2001;font-family:'Consolas',monospace;transition:all .15s}
+#ngMenuBtn:hover{color:#e8f4ff;text-shadow:0 0 12px rgba(120,200,255,0.5)}
+#ngMenu{display:none;position:fixed;top:48px;right:18px;z-index:2001;background:linear-gradient(180deg,rgba(14,20,28,0.93),rgba(8,11,16,0.95));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(43,208,208,0.3);border-radius:12px;padding:16px;min-width:262px;font-family:'Consolas',monospace;box-shadow:0 18px 50px rgba(0,0,0,0.7),0 0 26px rgba(43,208,208,0.1),inset 0 1px 0 rgba(160,255,255,0.08)}
+#ngMenuTitle{color:#5ee0e0;font-size:10px;letter-spacing:3px;margin-bottom:8px;text-shadow:0 0 10px rgba(43,208,208,0.5)}
+#ngMenuCh{color:#d8e6f2;font-size:12px;letter-spacing:2px;margin-bottom:6px;text-shadow:0 0 8px rgba(120,180,255,0.25)}
+#ngMenuBar{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:8px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.5)}
+#ngMenuBarFill{height:100%;width:0;background:linear-gradient(90deg,#3a6a9a,#64ffa0);border-radius:3px;transition:width .45s ease;box-shadow:0 0 10px rgba(100,255,160,0.5)}
+#ngMenuProg{color:#8a9ab0;font-size:11px;line-height:1.55;margin-bottom:10px;min-height:16px}
+.ngMenuGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ngMenuGrid button{background:linear-gradient(180deg,rgba(20,30,40,0.9),rgba(12,18,26,0.93));border:1px solid rgba(90,130,170,0.4);color:#9fb4c8;font-family:'Consolas',monospace;font-size:11px;padding:8px 4px;border-radius:7px;cursor:pointer;letter-spacing:1px;box-shadow:inset 0 1px 0 rgba(180,220,255,0.06);transition:all .16s}
+.ngMenuGrid button:hover{background:linear-gradient(180deg,rgba(26,42,54,0.95),rgba(16,26,36,0.95));border-color:#4ad0e0;color:#e8f8ff;box-shadow:0 0 14px rgba(43,208,208,0.3);transform:translateY(-1px)}
+#ngMenuLeave{grid-column:1/-1;border-color:rgba(200,90,110,0.5);color:#c88a9a}
+#ngMenuLeave:hover{background:linear-gradient(180deg,rgba(40,18,24,0.95),rgba(24,11,15,0.95));border-color:#e06a80;color:#ffb8c4;box-shadow:0 0 14px rgba(220,90,120,0.35)}
+#achToasts{position:fixed;left:14px;bottom:14px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:340px}
+.achHead{display:flex;align-items:baseline;justify-content:center;gap:8px;padding:12px 0 2px}
+.achHeadN{color:#e8c8ff;font-family:Georgia,serif;font-size:20px;letter-spacing:2px}
+.achPct{color:#c878ff;font-family:Consolas,monospace;font-size:13px}
+.achHeadSub{color:#6a5a7a;font-family:Georgia,serif;font-size:10px;letter-spacing:3px;text-transform:uppercase}
+.achChips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 14px 7px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.achChip{flex:0 0 auto;background:#141020;border:1px solid #2a2438;color:#7a6a8a;border-radius:11px;padding:3px 9px;font:10px Consolas,monospace;letter-spacing:1px;cursor:pointer;white-space:nowrap}
+.achChip:hover{border-color:#6a4a8a;color:#c8a0d0}
+.achChip.on{background:#2a1c3a;border-color:#8a5acc;color:#e8c8ff}
+.achSecRow{display:flex;justify-content:space-between;color:#8a6a9a;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:13px 0 4px;border-bottom:1px dashed rgba(255,255,255,0.08)}
+.achSecRow span:last-child{color:#5a4a6a;letter-spacing:1px}
+.achRow{display:flex;gap:10px;align-items:flex-start;margin:6px 0;padding:7px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:5px;background:rgba(255,255,255,0.02)}
+.achRow.got{border-color:rgba(200,120,255,0.4);background:rgba(200,120,255,0.07);box-shadow:0 0 12px rgba(200,120,255,0.08)}
+.achRowL{flex:1;min-width:0}
+.achName{font-family:Georgia,serif;font-size:13px;letter-spacing:1px;color:#4f4f5e}
+.achRow.got .achName{color:#e8c8ff}
+.achDesc{font-family:Consolas,monospace;font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px;line-height:1.4}
+.achRow.got .achDesc{color:rgba(200,170,220,0.75)}
+.achBadge{flex:0 0 auto;font-family:Consolas,monospace;font-size:10px;padding:2px 6px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);color:#8a8a96;letter-spacing:1px;white-space:nowrap}
+.achRow.got .achBadge{border-color:rgba(100,255,160,0.35);color:#64ffa0}
+#ngChapHallBox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90050;background:linear-gradient(180deg,rgba(14,10,22,0.97),rgba(8,6,14,0.96));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(138,106,170,0.5);border-radius:14px;padding:16px 18px;max-width:420px;width:90%;max-height:84vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(168,138,204,0.5) transparent;box-shadow:0 18px 50px rgba(0,0,0,0.7),0 0 30px rgba(138,74,154,0.25),inset 0 1px 0 rgba(200,150,255,0.14);font-family:Consolas,monospace}
+#ngChapHallBox::-webkit-scrollbar{width:6px}
+#ngChapHallBox::-webkit-scrollbar-track{background:transparent}
+#ngChapHallBox::-webkit-scrollbar-thumb{background:rgba(168,138,204,0.5);border-radius:3px}
+#ngChapHallBox::-webkit-scrollbar-thumb:hover{background:rgba(200,150,255,0.75)}
+.ngChapHallT{color:#d8b8e8;font-size:11px;letter-spacing:3px;text-align:center;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid rgba(138,106,170,0.35);text-shadow:0 0 10px rgba(200,120,255,0.4)}
+.ngChapHallD{display:block;width:100%;margin:4px 0;padding:9px 11px;background:linear-gradient(180deg,rgba(32,24,48,0.9),rgba(20,16,32,0.9));color:#c8aae0;border:1px solid rgba(106,74,138,0.7);border-radius:8px;font-family:Consolas,monospace;font-size:12px;text-align:left;cursor:pointer;letter-spacing:1px;transition:all .18s;box-shadow:inset 0 1px 0 rgba(200,150,255,0.08)}
+.ngChapHallD:hover:not(:disabled){background:linear-gradient(180deg,rgba(48,34,72,0.95),rgba(32,24,48,0.95));border-color:#a88acc;color:#ecdcff;box-shadow:0 0 14px rgba(168,106,204,0.35),inset 0 1px 0 rgba(200,150,255,0.14);transform:translateX(3px)}
+.ngChapHallD:disabled{opacity:.35;cursor:not-allowed}
+.ngChapHallX{display:block;width:100%;margin-top:10px;padding:7px;background:transparent;color:#8a7a9a;border:1px solid rgba(90,66,110,0.8);border-radius:8px;font-family:Consolas,monospace;font-size:11px;cursor:pointer;letter-spacing:2px;transition:all .18s}
+.ngChapHallX:hover{border-color:#8a6aaa;color:#d8c0f0;background:rgba(138,106,170,0.12)}
+#voidPhoneBox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90060;background:linear-gradient(180deg,rgba(8,14,12,0.97),rgba(4,8,8,0.96));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(100,180,140,0.4);border-radius:16px;padding:16px;max-width:380px;width:88%;box-shadow:0 18px 50px rgba(0,0,0,0.75),0 0 30px rgba(100,255,160,0.12),inset 0 1px 0 rgba(160,255,200,0.12);font-family:Consolas,monospace}
+.voidPhoneT{color:#9ee8b8;font-size:10.5px;letter-spacing:3px;text-align:center;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid rgba(100,180,140,0.3);text-shadow:0 0 10px rgba(100,255,160,0.4)}
+.voidPhoneMsg{background:linear-gradient(180deg,rgba(22,32,28,0.9),rgba(14,20,18,0.9));border:1px solid rgba(60,110,90,0.5);border-left:2px solid rgba(100,255,160,0.45);border-radius:9px;padding:8px 11px;margin:5px 0;color:#cfe0d6;font-size:12px;line-height:1.5;box-shadow:inset 0 1px 0 rgba(160,255,200,0.06)}
+.voidPhoneWho{color:#64ffa0;text-shadow:0 0 8px rgba(100,255,160,0.45)}
+#voidDailyBox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90070;background:linear-gradient(180deg,rgba(16,10,24,0.97),rgba(9,6,14,0.96));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(138,106,170,0.5);border-radius:16px;padding:16px;max-width:380px;width:88%;box-shadow:0 18px 50px rgba(0,0,0,0.75),0 0 30px rgba(138,74,154,0.28),inset 0 1px 0 rgba(200,150,255,0.13);font-family:Consolas,monospace}
+.voidDailyFlavor{color:#b39fd0;font-size:10.5px;text-align:center;margin-bottom:9px;letter-spacing:2px;padding-bottom:9px;border-bottom:1px solid rgba(138,106,170,0.3);text-shadow:0 0 8px rgba(200,120,255,0.3)}
+.voidDailyGuesses{max-height:180px;overflow-y:auto;margin:6px 0}
+.voidDailyRow{background:linear-gradient(180deg,rgba(26,18,40,0.9),rgba(18,14,30,0.9));border:1px solid rgba(74,58,106,0.75);border-left:2px solid rgba(168,138,204,0.5);border-radius:7px;padding:6px 9px;margin:4px 0;font-size:12px;display:flex;gap:8px;align-items:center;box-shadow:inset 0 1px 0 rgba(200,150,255,0.06)}
+.voidDailyNum{color:#d4bce8;letter-spacing:3px}
+.voidDailyMarks{color:#64ffa0;letter-spacing:3px;text-shadow:0 0 8px rgba(100,255,160,0.4)}
+.voidDailyCnt{color:#8a7a9a;font-size:11px}
+.voidDailyEntry{display:flex;gap:6px;margin-top:8px}
+.voidDailyEntry input{flex:1;background:rgba(10,8,18,0.9);border:1px solid rgba(106,74,138,0.8);border-radius:8px;color:#efe2ff;font-family:Consolas,monospace;font-size:16px;letter-spacing:6px;padding:8px 9px;text-align:center;transition:border-color .2s,box-shadow .2s;outline:none}
+.voidDailyEntry input:focus{border-color:rgba(168,138,204,0.9);box-shadow:0 0 14px rgba(138,74,154,0.45)}
+.voidDailyEntry button{background:linear-gradient(180deg,rgba(68,48,104,0.95),rgba(48,34,80,0.95));border:1px solid rgba(138,106,170,0.85);border-radius:8px;color:#e4d0ff;font-family:Consolas,monospace;font-size:12px;padding:0 14px;cursor:pointer;letter-spacing:1px;transition:all .18s;box-shadow:inset 0 1px 0 rgba(200,150,255,0.14)}
+.voidDailyEntry button:hover{background:linear-gradient(180deg,rgba(88,62,132,0.95),rgba(64,46,104,0.95));box-shadow:0 0 14px rgba(168,106,204,0.4),inset 0 1px 0 rgba(200,150,255,0.2);transform:translateY(-1px)}
+.voidDailyEntry button:active{transform:translateY(0)}
+.voidDailySolved{color:#64ffa0;font-size:12px;text-align:center;margin-top:8px;line-height:1.5}
+#voidDailyMsg{color:#ff9a6a;font-size:11px;text-align:center;margin-top:6px;min-height:14px}
+.achToast{background:rgba(16,10,24,0.95);border:1px solid #8a4a9a;border-left:3px solid #c878ff;border-radius:6px;padding:10px 14px;font-family:Consolas,monospace;box-shadow:0 4px 18px rgba(140,80,200,0.35);animation:achToastIn .35s ease both}
+.achToastT{color:#e8c8ff;font-size:12px;letter-spacing:1px}
+.achToastD{color:rgba(200,170,220,0.75);font-size:11px;margin-top:3px;line-height:1.4}
+.achToastOut{animation:achToastOut .4s ease both}
+@keyframes achToastIn{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+@keyframes achToastOut{to{opacity:0;transform:translateX(-40px)}}
+#ngMenuProg{color:#8a9ab0;font-size:11px;margin-bottom:12px;line-height:1.8}
+#ngMenu button{display:block;width:100%;margin:6px 0;background:linear-gradient(180deg,rgba(18,28,38,0.85),rgba(10,16,24,0.9));border:1px solid rgba(90,130,170,0.4);color:#9fb2c5;font-family:'Consolas',monospace;font-size:12px;letter-spacing:2px;padding:8px;cursor:pointer;border-radius:7px;box-shadow:inset 0 1px 0 rgba(180,220,255,0.06);transition:all .16s}
+#ngMenu button:hover{border-color:#4ad0e0;color:#e0f6ff;box-shadow:0 0 14px rgba(43,208,208,0.3);transform:translateY(-1px)}
+#ngMenuLeave{border-color:rgba(200,90,110,0.5)!important;color:#c87878!important}
+#ngMenuLeave:hover{border-color:#e06a80!important;color:#ffb8c4!important;box-shadow:0 0 14px rgba(220,90,120,0.3)!important}
+#ngCoreOrb{cursor:pointer;user-select:none}
+#ngCoreOrb.orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,220,255,.95),rgba(160,60,255,.7) 45%,rgba(40,0,80,.9));box-shadow:0 0 60px rgba(160,60,255,.7),0 0 120px rgba(100,0,255,.4);animation:corePulse 2.4s ease-in-out infinite}
+#ngCoreOrb.voided{font-size:110px;color:#c8c8c8;text-shadow:0 0 30px rgba(200,200,200,.4);animation:ngCoreFlicker 2.5s steps(8) infinite}
+#ngCoreOrb.voided:hover{text-shadow:0 0 50px rgba(200,200,200,.7)}
+@keyframes ngCoreFlicker{0%,100%{opacity:1}12%{opacity:.4}14%{opacity:1}46%{opacity:1}48%{opacity:.2}50%{opacity:1}81%{opacity:1}83%{opacity:.5}85%{opacity:1}}
+.ngShake{animation:ngShakeA .4s}
+@keyframes ngShakeA{25%{transform:translate(-6px,3px)}50%{transform:translate(5px,-4px)}75%{transform:translate(-3px,-2px)}}
+#ngTutArea{display:flex;flex-direction:column;align-items:center;gap:18px}
+#ngCircle{width:90px;height:90px;border:2px solid #2bd0d0;border-radius:50%;cursor:pointer;transition:all .16s;box-shadow:0 0 12px rgba(43,208,208,0.2),inset 0 0 14px rgba(43,208,208,0.07)}
+#ngCircle:hover{background:rgba(43,208,208,.14);box-shadow:0 0 22px rgba(43,208,208,0.5),inset 0 0 18px rgba(43,208,208,0.12);transform:scale(1.04)}
+#ngSquare{width:90px;height:90px;border:2px solid #c87878;cursor:pointer;transition:all .16s;box-shadow:0 0 12px rgba(200,120,120,0.2),inset 0 0 14px rgba(200,120,120,0.07)}
+#ngSquare:hover{background:rgba(200,120,120,.14);box-shadow:0 0 22px rgba(200,120,120,0.5),inset 0 0 18px rgba(200,120,120,0.12);transform:scale(1.04)}
+#ngSliderBg{cursor:pointer}
+#ngSetRow{display:flex;gap:12px}
+.ngSetOn{border-color:#2bd0d0!important;color:#d8e6f2!important;text-shadow:0 0 8px rgba(43,208,208,0.45)}
+#ngManualBox{max-height:220px;overflow-y:auto;text-align:left;font-family:'Consolas',monospace;font-size:12px;line-height:1.9;color:#9fb2c5;border:1px solid rgba(90,120,160,0.45);border-radius:9px;padding:14px 18px;max-width:min(480px,90%);background:linear-gradient(180deg,rgba(18,24,34,0.85),rgba(10,14,20,0.9));box-shadow:inset 0 1px 0 rgba(180,210,255,0.07),0 8px 22px rgba(0,0,0,0.4)}
+#ngManualNext{background:linear-gradient(180deg,rgba(16,36,40,0.85),rgba(9,20,23,0.9));border:1px solid rgba(43,208,208,0.55);color:#b8f0f0;font-family:Georgia,serif;font-size:14px;letter-spacing:3px;padding:10px 30px;margin-top:12px;cursor:pointer;border-radius:9px;box-shadow:inset 0 1px 0 rgba(180,255,255,0.1),0 8px 20px rgba(0,0,0,0.4);transition:all .16s}
+#ngManualNext:hover{border-color:#4ee0e0;color:#e8ffff;box-shadow:0 0 18px rgba(43,208,208,0.4),0 10px 24px rgba(0,0,0,0.45);transform:translateY(-1px)}
+#ngManualNext.ngLockedBtn{opacity:.35;cursor:not-allowed;border-color:#2a3542;color:#4a5a6a;box-shadow:none;transform:none}
+#ngCourse{position:relative;width:min(560px,90%);height:280px;border:1px dashed rgba(90,120,160,0.5);border-radius:8px;background:linear-gradient(180deg,rgba(12,17,25,0.5),rgba(7,10,15,0.6))}
+.ngPlat{position:absolute;width:64px;height:18px;background:linear-gradient(180deg,rgba(44,56,74,0.9),rgba(26,34,46,0.95));border:1px solid rgba(100,130,170,0.55);border-radius:4px;cursor:pointer;text-align:center;transition:all .14s;box-shadow:inset 0 1px 0 rgba(180,210,255,0.08),0 3px 8px rgba(0,0,0,0.4)}
+.ngPlatNum{font-size:9px;color:#5a6a7a;font-family:'Consolas',monospace;pointer-events:none;line-height:16px}
+.ngPlatGhost{position:absolute;width:64px;height:18px;border:1px dashed rgba(90,106,122,.35);border-radius:3px;pointer-events:none}
+.ngPlat:hover{border-color:#e89a9a;box-shadow:0 0 12px rgba(200,120,120,0.4),inset 0 1px 0 rgba(255,200,200,0.1)}
+.ngPlat.kill{background:linear-gradient(180deg,#a02020,#600808);border-color:#ff5050;box-shadow:0 0 12px rgba(255,60,60,.5);animation:ngKillPulse 1s ease-in-out infinite}
+@keyframes ngKillPulse{50%{box-shadow:0 0 22px rgba(255,60,60,.8)}}
+#ngNoob,#ngNoob2{position:absolute;width:22px;height:22px;background:#f5cd30;border:2px solid #a88f1a;border-radius:3px;transition:left .5s ease-in-out,top .5s ease-in-out;z-index:6;cursor:pointer}
+#ngNoob.fall,#ngNoob2.fall{transition:left .2s,top .6s ease-in}
+#ngNoob2{background:#30c8f5;border-color:#1a88a8}
+#ngCredList{max-height:300px;overflow:hidden;border:1px solid rgba(90,120,160,0.4);border-radius:10px;padding:10px 26px;min-width:min(420px,86%);background:linear-gradient(180deg,rgba(16,22,32,0.7),rgba(9,13,19,0.78));box-shadow:inset 0 1px 0 rgba(180,210,255,0.06),0 10px 26px rgba(0,0,0,0.4)}
+.ngCredRole{color:#5a8ab0;font-size:11px;letter-spacing:4px;margin:12px 0 4px;font-family:'Consolas',monospace}
+.ngCredName{color:#c8d8e8;font-size:16px;letter-spacing:2px;font-family:'Georgia',serif;cursor:pointer;padding:2px 8px;border-radius:4px;border:1px solid transparent;transition:all .14s}
+.ngCredName:hover{border-color:#7a93ad;background:rgba(120,160,220,0.08);text-shadow:0 0 10px rgba(120,180,255,0.4)}
+.ngCredName.held{border-color:#2bd0d0;color:#fff;box-shadow:0 0 12px rgba(43,208,208,.4)}
+#ngBossHpLbl{color:#e08080;font-family:'Consolas',monospace;font-size:12px;letter-spacing:2px;margin:6px}
+#ngBossWrap{width:140px;height:140px;margin:18px auto;perspective:600px;cursor:pointer;user-select:none}
+.ngCubeSpin{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:ngSpinBoss 8s linear infinite}
+.ngCubeSpin div{position:absolute;width:140px;height:140px;border:2px solid #2bd0d0;background:rgba(43,208,208,.12)}
+.ngCubeSpin div:nth-child(1){transform:translateZ(70px)}
+.ngCubeSpin div:nth-child(2){transform:rotateY(180deg) translateZ(70px)}
+.ngCubeSpin div:nth-child(3){transform:rotateY(90deg) translateZ(70px)}
+.ngCubeSpin div:nth-child(4){transform:rotateY(-90deg) translateZ(70px)}
+.ngCubeSpin div:nth-child(5){transform:rotateX(90deg) translateZ(70px)}
+.ngCubeSpin div:nth-child(6){transform:rotateX(-90deg) translateZ(70px)}
+@keyframes ngSpinBoss{from{transform:rotateX(-20deg) rotateY(0)}to{transform:rotateX(-20deg) rotateY(360deg)}}
+#ngBossMid{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.ngShieldNode{width:44px;height:44px;background:linear-gradient(180deg,rgba(48,66,90,0.9),rgba(30,42,58,0.95));border:2px solid #4a6a8a;transform:rotate(45deg);cursor:pointer;transition:all .14s;box-shadow:inset 0 1px 0 rgba(180,210,255,0.1),0 4px 10px rgba(0,0,0,0.4)}
+.ngShieldNode:hover{border-color:#e89a9a;box-shadow:0 0 14px rgba(200,120,120,0.45),inset 0 1px 0 rgba(255,200,200,0.1)}
+.ngEcho{width:64px;height:64px;border:2px solid #2bd0d0;border-radius:8px;color:#9fd8d8;font-family:'Consolas',monospace;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:linear-gradient(180deg,rgba(16,36,40,0.8),rgba(9,20,23,0.88));box-shadow:inset 0 1px 0 rgba(180,255,255,0.08),0 6px 14px rgba(0,0,0,0.4);transition:all .15s}
+.ngEcho:hover{border-color:#e89a9a;box-shadow:0 0 16px rgba(200,120,120,0.45),inset 0 1px 0 rgba(255,200,200,0.1);transform:translateY(-2px)}
+.ngChoice{display:inline-block;margin:8px;padding:12px 28px;font-family:Georgia,serif;font-size:15px;letter-spacing:3px;cursor:pointer;border-radius:9px;background:linear-gradient(180deg,rgba(18,26,36,0.8),rgba(10,15,21,0.88));transition:all .16s;box-shadow:inset 0 1px 0 rgba(180,210,255,0.07),0 6px 16px rgba(0,0,0,0.4)}
+#ngChoiceStop{border:1px solid rgba(43,208,208,0.55);color:#9fe8e8}
+#ngChoiceKeep{border:1px solid rgba(200,120,120,0.55);color:#e08a8a}
+.ngChoice:hover{filter:brightness(1.25);transform:translateY(-2px)}
+#ngChoiceStop:hover{box-shadow:0 0 18px rgba(43,208,208,0.4),inset 0 1px 0 rgba(180,255,255,0.12),0 8px 20px rgba(0,0,0,0.45)}
+#ngChoiceKeep:hover{box-shadow:0 0 18px rgba(200,120,120,0.4),inset 0 1px 0 rgba(255,200,200,0.12),0 8px 20px rgba(0,0,0,0.45)}
+#ngEndTitle{font-size:30px;letter-spacing:8px;color:#e8f0fa;font-family:Georgia,serif;margin:10px;text-shadow:0 0 24px rgba(120,200,255,0.4),0 0 64px rgba(80,160,240,0.25)}
+.ngCoreOrb{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,220,255,.95),rgba(160,60,255,.7) 45%,rgba(40,0,80,.9));box-shadow:0 0 60px rgba(160,60,255,.7),0 0 120px rgba(100,0,255,.4);animation:corePulse 2.4s ease-in-out infinite;cursor:pointer;margin:0 auto;user-select:none}
+.ngCoreVoid{font-size:84px;line-height:1;color:#c8c8c8;text-shadow:0 0 30px rgba(200,200,200,.4);animation:ngCoreFlicker 2.5s steps(8) infinite;cursor:pointer;user-select:none}
+.ngPortal{display:block;width:min(420px,86%);margin:10px auto;background:linear-gradient(180deg,rgba(16,30,38,0.8),rgba(9,17,22,0.88));border:1px solid rgba(90,140,180,0.5);color:#9fb2c5;font-family:Georgia,serif;font-size:15px;letter-spacing:3px;padding:12px;cursor:pointer;border-radius:9px;box-shadow:inset 0 1px 0 rgba(180,220,255,0.08),0 8px 20px rgba(0,0,0,0.4);transition:all .16s}
+.ngPortal:hover{border-color:#4ad0e0;color:#d8f2ff;box-shadow:0 0 18px rgba(43,208,208,0.35),inset 0 1px 0 rgba(180,255,255,0.12),0 10px 24px rgba(0,0,0,0.45);transform:translateY(-1px)}
+#ngPullBtn,#ngPassBtn{background:linear-gradient(180deg,rgba(84,70,16,0.9),rgba(52,44,10,0.94));border:2px solid rgba(200,168,32,0.75);color:#ffe970;font-family:Georgia,serif;font-size:15px;letter-spacing:2px;padding:12px 30px;margin:6px;cursor:pointer;border-radius:9px;box-shadow:inset 0 1px 0 rgba(255,240,160,0.18),0 8px 20px rgba(0,0,0,0.45);transition:all .16s}
+#ngPullBtn:hover,#ngPassBtn:hover{border-color:#ffd84a;box-shadow:0 0 18px rgba(255,200,50,0.35),inset 0 1px 0 rgba(255,245,180,0.24),0 10px 24px rgba(0,0,0,0.5);transform:translateY(-1px)}
+#ngStam{color:#7ac07a;font-family:'Consolas',monospace;font-size:12px;letter-spacing:2px;margin:8px}
+#ngAd{margin:12px auto 0;max-width:420px;border:1px solid #5a3a3a;color:#c87878;font-family:'Consolas',monospace;font-size:12px;padding:10px;border-radius:4px}
+#ngSub2{color:#7a8a9c;font-size:10px;margin-top:6px;font-family:'Consolas',monospace;text-shadow:0 0 8px rgba(120,160,220,0.25)}
+#ngTiles{display:grid;grid-template-columns:repeat(3,74px);gap:10px;justify-content:center;margin-top:6px}
+.ngTile{width:74px;height:74px;border:1px solid #2a3542;border-radius:4px;color:#4a5a6a;font-family:'Consolas',monospace;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(20,28,38,.5);user-select:none}
+.ngTile:hover{border-color:#5a6a7a}
+.ngTile.holed{color:#5a1a1a;border-color:#5a1a1a;background:rgba(40,10,10,.4);cursor:default}
+.ngTile.is-exit{border-color:#2bd0d0;color:#2bd0d0;box-shadow:0 0 14px rgba(43,208,208,.4)}
+.ngRShape{cursor:pointer;margin:10px;user-select:none}
+.ngRShape.circ{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#5ff2f2,#1a8a8a)}
+.ngRShape.tri{width:0;height:0;border-left:30px solid transparent;border-right:30px solid transparent;border-bottom:52px solid #b06ae0}
+.ngRShape.sq{width:54px;height:54px;background:linear-gradient(180deg,#f06aa0,#a02858)}
+.ngTower{position:absolute;width:64px;height:40px;background:#2a3a4a;border:1px solid #4a6a8a;border-radius:4px;color:#9fc2e0;font-family:'Consolas',monospace;font-size:10px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);cursor:pointer;user-select:none}
+.ngTower:hover{border-color:#c87878}
+.ngRange{position:absolute;width:200px;height:200px;border:1px dashed rgba(43,208,208,.22);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.ngEnemy{position:absolute;width:16px;height:16px;background:#c03030;border:1px solid #ff6060;border-radius:2px;transform:translate(-50%,-50%);cursor:pointer;z-index:6}
+#ngBase{position:absolute;right:2%;top:55%;width:26px;height:60px;background:#2a3a2a;border:2px solid #5aa05a;transform:translate(-50%,-50%);border-radius:3px}
+#ngBaseHp{position:absolute;right:8px;top:36%;color:#7ac07a;font-family:'Consolas',monospace;font-size:11px;letter-spacing:1px;white-space:nowrap}
+#demoChecker{position:fixed;top:0;left:0;width:100%;height:100%;z-index:105;pointer-events:none;opacity:0;background:repeating-conic-gradient(rgba(0,0,0,1) 0% 25%,rgba(190,190,200,1) 0% 50%) 50%/90px 90px}
+#demoWatcher{position:fixed;z-index:106;width:10px;height:10px;border-radius:50%;background:rgba(255,80,80,0.9);box-shadow:0 0 18px rgba(255,80,80,0.9);display:none;pointer-events:none;animation:demoPulse 2s ease-in-out infinite}
+@keyframes demoPulse{0%,100%{transform:scale(1);opacity:0.6}50%{transform:scale(1.8);opacity:1}}
+#demoStill{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:107;display:none;pointer-events:none;font-family:'Consolas',monospace;font-size:min(18vw,160px);font-weight:bold;letter-spacing:0.2em;color:rgba(255,255,255,0.92);text-shadow:0 0 60px rgba(255,255,255,0.4);animation:demoStillFlicker 3s steps(12) infinite}
+#demoTheirs{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:107;display:none;pointer-events:none;font-family:'Consolas',monospace;font-size:min(14vw,120px);font-weight:bold;letter-spacing:0.35em;color:rgba(255,90,90,0.9);text-shadow:0 0 60px rgba(255,60,60,0.45);animation:demoStillFlicker 4s steps(14) infinite}
+#demoGoAway{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:107;display:none;pointer-events:none;font-family:'Consolas',monospace;font-size:min(14vw,120px);font-weight:bold;letter-spacing:0.25em;color:rgba(255,30,30,0.95);text-shadow:0 0 80px rgba(255,0,0,0.6);animation:demoGoAwayFlicker 1.5s steps(8) infinite}
+@keyframes demoGoAwayFlicker{0%,100%{opacity:1}20%{opacity:0.3}25%{opacity:1}55%{opacity:1}60%{opacity:0.1}65%{opacity:1}90%{opacity:1}95%{opacity:0.4}}
+@keyframes demoStillFlicker{0%,100%{opacity:0.95}8%{opacity:0.2}10%{opacity:0.9}46%{opacity:0.9}48%{opacity:0.3}50%{opacity:0.85}82%{opacity:0.85}84%{opacity:0.1}86%{opacity:0.9}}
+#demoRec{color:#ff4040;animation:demoBlink 1.1s steps(2) infinite}
+@keyframes demoBlink{50%{opacity:0.15}}
+#cbFog{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 108%,rgba(130,140,165,0.20),transparent 60%),radial-gradient(ellipse at 15% 85%,rgba(110,120,150,0.12),transparent 55%),radial-gradient(ellipse at 85% 80%,rgba(110,120,150,0.10),transparent 50%)}
+#homCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none}
+canvas#main{display:block;position:fixed;top:0;left:0;z-index:0}
+#overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding-left:40%;padding-top:min(640px,calc(100vh - 240px));z-index:10;pointer-events:none}
+.clock{font-size:96px;font-weight:100;letter-spacing:6px;color:rgba(255,255,255,0.9);text-shadow:0 0 40px rgba(43,208,208,0.3),0 0 80px rgba(43,208,208,0.1);font-family:'Segoe UI Light','Segoe UI',system-ui,sans-serif;margin-bottom:8px}
+.date{font-size:18px;font-weight:300;color:rgba(255,255,255,0.4);letter-spacing:2px;font-family:'Segoe UI',system-ui,sans-serif;margin-bottom:50px;text-align:right}
+.stats{position:fixed;bottom:20px;left:20px;color:rgba(43,208,208,0.7);font-family:'Consolas',monospace;font-size:12px;z-index:20;pointer-events:none}
+.hint{position:fixed;bottom:20px;right:20px;color:rgba(255,255,255,0.2);font-family:'Consolas',monospace;font-size:12px;z-index:20;pointer-events:none}
+#shapePalette{position:fixed;top:20px;right:60px;display:flex;flex-direction:column;gap:14px;z-index:30}
+.shapeBtn{width:54px;height:54px;border:1px solid rgba(43,208,208,0.25);border-radius:12px;background:linear-gradient(180deg,rgba(0,0,0,0.72),rgba(4,16,18,0.55));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer;transition:all 0.22s cubic-bezier(0.2,0.8,0.3,1);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,0.45),inset 0 1px 0 rgba(43,208,208,0.10)}
+.shapeBtn:hover{border-color:rgba(43,208,208,0.85);background:rgba(43,208,208,0.10);transform:scale(1.12) translateX(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.5),0 0 18px rgba(43,208,208,0.35),inset 0 1px 0 rgba(43,208,208,0.2)}
+.shapeBtn.active{border-color:rgba(43,208,208,1);background:rgba(43,208,208,0.14);box-shadow:0 0 0 1px rgba(43,208,208,0.45),0 0 22px rgba(43,208,208,0.45),inset 0 0 14px rgba(43,208,208,0.18);animation:shapeActiveGlow 2.4s ease-in-out infinite}
+@keyframes shapeActiveGlow{0%,100%{box-shadow:0 0 0 1px rgba(43,208,208,0.4),0 0 18px rgba(43,208,208,0.3),inset 0 0 12px rgba(43,208,208,0.14)}50%{box-shadow:0 0 0 1px rgba(43,208,208,0.7),0 0 30px rgba(43,208,208,0.6),inset 0 0 18px rgba(43,208,208,0.25)}}
+.shapeBtn.skill-locked{cursor:not-allowed;position:relative;pointer-events:none;opacity:0.25;filter:grayscale(1)}
+.shapeBtn.skill-locked:after{content:'🔒';position:absolute;top:-6px;right:-6px;background:rgba(255,80,80,0.9);color:#fff;font-size:11px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Consolas,monospace;line-height:1}
+.help-cmd.skill-locked{opacity:0.28;filter:grayscale(1);user-select:none}
+.help-cmd.skill-locked .hl{color:rgba(255,255,255,0.3)!important}
+.help-cmd.skill-locked:after{content:' 🔒';font-size:9px;opacity:0.7}
+.help-section.skill-locked{opacity:0.3;filter:grayscale(1)}
+.help-section.skill-locked .help-title{color:rgba(255,255,255,0.25)!important;border-bottom-color:rgba(255,255,255,0.08)!important}
+.help-section.skill-gated{display:none}
+.help-section.skill-gated.unlocked{display:block;opacity:1;filter:none}
+@keyframes corePulse{0%,100%{transform:scale(1);box-shadow:0 0 70px rgba(170,70,255,0.75),0 0 150px rgba(110,0,255,0.42),inset 0 -14px 30px rgba(20,0,50,0.6),inset 0 10px 24px rgba(255,220,255,0.22)}50%{transform:scale(1.08);box-shadow:0 0 100px rgba(195,100,255,0.95),0 0 190px rgba(130,10,255,0.55),inset 0 -14px 30px rgba(20,0,50,0.6),inset 0 10px 24px rgba(255,220,255,0.3)}}
+@keyframes xPulse{0%,100%{opacity:0.35}50%{opacity:1}}
+.shapeLabel{position:absolute;right:64px;font-size:9.5px;color:rgba(43,208,208,0.55);font-family:'Consolas',monospace;letter-spacing:2px;white-space:nowrap;pointer-events:none;background:rgba(0,0,0,0.5);border:1px solid rgba(43,208,208,0.16);padding:3px 8px;border-radius:7px;transition:all 0.22s cubic-bezier(0.2,0.8,0.3,1);box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.shapeBtn:hover .shapeLabel,.shapeBtn.active .shapeLabel{color:rgba(43,208,208,0.95);border-color:rgba(43,208,208,0.5);background:rgba(2,20,22,0.75);text-shadow:0 0 8px rgba(43,208,208,0.5)}
+#glitch{position:fixed;top:0;left:0;right:0;bottom:0;z-index:25;pointer-events:none;opacity:0;mix-blend-mode:screen}
+#themeIndicator{position:fixed;bottom:40px;left:20px;color:rgba(255,255,255,0.15);font-family:'Consolas',monospace;font-size:11px;z-index:20;pointer-events:none;transition:color 0.5s}
+#terminal{position:fixed;top:20px;left:20px;width:380px;max-height:calc(100vh - 80px);background:linear-gradient(180deg,rgba(3,15,17,0.94),rgba(0,7,9,0.90));backdrop-filter:blur(10px) saturate(1.25);-webkit-backdrop-filter:blur(10px) saturate(1.25);border:1px solid rgba(43,208,208,0.25);border-radius:12px;z-index:56;font-family:'Consolas',monospace;font-size:13px;color:rgba(43,208,208,0.85);display:flex;flex-direction:column;transition:border-color .3s,box-shadow .3s;box-shadow:0 14px 44px rgba(0,0,0,0.55),0 0 0 1px rgba(0,0,0,0.35),inset 0 1px 0 rgba(43,208,208,0.14);overflow:hidden}
+#terminal:before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(43,208,208,0.9),transparent);pointer-events:none}
+#terminal:hover{border-color:rgba(43,208,208,0.55);box-shadow:0 16px 48px rgba(0,0,0,0.6),0 0 26px rgba(43,208,208,0.15),inset 0 1px 0 rgba(43,208,208,0.2)}
+#termHeader{padding:10px 30px 9px 14px;border-bottom:1px solid rgba(43,208,208,0.13);font-size:10px;color:rgba(43,208,208,0.7);letter-spacing:1.8px;text-transform:uppercase;cursor:move;user-select:none;flex-shrink:0;line-height:1.7;position:relative;background:linear-gradient(180deg,rgba(43,208,208,0.10),rgba(43,208,208,0.015))}
+#termHeader:after{content:'\25CF';position:absolute;right:13px;top:12px;font-size:7px;color:rgba(100,255,160,0.95);text-shadow:0 0 8px rgba(100,255,160,0.9);animation:xPulse 2s ease-in-out infinite}
+#termOutput{flex:1;overflow-y:auto;padding:12px 14px;white-space:pre-wrap;word-wrap:break-word;line-height:1.55;text-shadow:0 0 8px rgba(43,208,208,0.12);scrollbar-width:thin;scrollbar-color:rgba(43,208,208,0.3) transparent}
+#termInput{display:flex;padding:8px 12px;border-top:1px solid rgba(43,208,208,0.13);flex-shrink:0;align-items:center;background:linear-gradient(180deg,rgba(43,208,208,0.04),rgba(43,208,208,0.08))}
+#termPrompt{color:rgba(43,208,208,1);margin-right:8px;flex-shrink:0;text-shadow:0 0 10px rgba(43,208,208,0.7);letter-spacing:.5px}
+#termField{background:none;border:none;outline:none;color:rgba(255,255,255,0.92);font-family:'Consolas',monospace;font-size:13px;flex:1;caret-color:rgba(43,208,208,1)}
+::selection{background:rgba(43,208,208,0.3)}
+#termOutput::-webkit-scrollbar{width:6px}
+#termOutput::-webkit-scrollbar-track{background:transparent}
+#termOutput::-webkit-scrollbar-thumb{background:rgba(43,208,208,0.28);border-radius:3px}
+#termOutput::-webkit-scrollbar-thumb:hover{background:rgba(43,208,208,0.5)}
+.gui-window{position:fixed;background:linear-gradient(180deg,rgba(2,12,14,0.93),rgba(0,6,8,0.9));backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border:1px solid rgba(43,208,208,0.35);border-radius:12px;font-family:'Consolas',monospace;font-size:13px;color:rgba(43,208,208,0.9);box-shadow:0 16px 46px rgba(0,0,0,0.55),0 0 24px rgba(43,208,208,0.12),inset 0 1px 0 rgba(43,208,208,0.14);z-index:58;overflow:hidden;transition:border-color 0.3s,box-shadow 0.3s}
+.gui-window:hover{border-color:rgba(43,208,208,0.65);box-shadow:0 18px 50px rgba(0,0,0,0.6),0 0 30px rgba(43,208,208,0.2),inset 0 1px 0 rgba(43,208,208,0.18)}
+.gui-title{background:linear-gradient(180deg,rgba(43,208,208,0.14),rgba(43,208,208,0.03));padding:7px 10px;cursor:move;display:flex;justify-content:space-between;align-items:center;user-select:none;border-bottom:1px solid rgba(43,208,208,0.2);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;position:relative}
+.gui-title:before{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,rgba(43,208,208,0.85),transparent);pointer-events:none}
+.gui-title span{opacity:0.85;text-shadow:0 0 8px rgba(43,208,208,0.25)}
+.gui-close{width:18px;height:18px;border-radius:50%;background:rgba(255,80,80,0.3);color:rgba(255,80,80,0.9);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;line-height:1;transition:all 0.2s;border:1px solid rgba(255,80,80,0.4)}
+.gui-close:hover{background:rgba(255,80,80,0.65);transform:scale(1.2);box-shadow:0 0 12px rgba(255,80,80,0.5)}
+.gui-max-btn{width:18px;height:18px;border-radius:4px;background:rgba(43,208,208,0.22);color:rgba(43,208,208,0.9);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;line-height:1;transition:all 0.2s;border:1px solid rgba(43,208,208,0.4)}
+.gui-max-btn:hover{background:rgba(43,208,208,0.55);transform:scale(1.15);box-shadow:0 0 12px rgba(43,208,208,0.5)}
+.gui-content{position:relative;padding:8px;overflow:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(43,208,208,0.3) transparent}
+.gui-content::-webkit-scrollbar{width:6px}
+.gui-content::-webkit-scrollbar-track{background:transparent}
+.gui-content::-webkit-scrollbar-thumb{background:rgba(43,208,208,0.28);border-radius:3px}
+.gui-label{position:absolute;color:rgba(255,255,255,0.8);font-family:'Consolas',monospace;font-size:12px;white-space:nowrap}
+.gui-button{position:absolute;background:rgba(43,208,208,0.15);border:1px solid rgba(43,208,208,0.4);border-radius:4px;color:rgba(43,208,208,0.9);font-family:'Consolas',monospace;font-size:12px;padding:6px 12px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.gui-button:hover{background:rgba(43,208,208,0.3);border-color:rgba(43,208,208,0.8);transform:scale(1.05)}
+.gui-button:active{transform:scale(0.95)}
+.gui-input{position:absolute;background:rgba(0,0,0,0.6);border:1px solid rgba(43,208,208,0.3);border-radius:4px;color:rgba(255,255,255,0.9);font-family:'Consolas',monospace;font-size:12px;padding:6px 8px;outline:none;transition:border-color 0.2s}
+.gui-input:focus{border-color:rgba(43,208,208,0.8);box-shadow:0 0 8px rgba(43,208,208,0.2)}
+.gui-checkbox{position:absolute;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.8);font-family:'Consolas',monospace;font-size:12px;cursor:pointer}
+.gui-checkbox input{accent-color:rgba(43,208,208,0.8)}
+.gui-image{position:absolute;border:1px solid rgba(43,208,208,0.3);border-radius:4px;object-fit:cover;max-width:100%;pointer-events:auto;transition:border-color 0.2s}
+@keyframes fadeInOut{0%{opacity:0}15%{opacity:1}85%{opacity:1}100%{opacity:0}}
+.gui-image:hover{border-color:rgba(43,208,208,0.8)}
+#vignette{position:fixed;top:0;left:0;right:0;bottom:0;z-index:15;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.7) 100%)}
+#filmGrain{position:fixed;top:0;left:0;right:0;bottom:0;z-index:16;pointer-events:none;opacity:0.06;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:128px 128px;animation:grainShift 0.5s steps(4) infinite}
+@keyframes grainShift{0%{transform:translate(0,0)}25%{transform:translate(-2px,3px)}50%{transform:translate(3px,-1px)}75%{transform:translate(-1px,-3px)}100%{transform:translate(2px,1px)}}
+#chromAb{position:fixed;top:0;left:0;right:0;bottom:0;z-index:17;pointer-events:none;opacity:0;transition:opacity 0.15s}
+#chromAb.active{opacity:1;animation:chromPulse 0.3s ease-out}
+@keyframes chromPulse{0%{opacity:0.8}100%{opacity:0}}
+#odFlash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:25;pointer-events:none;opacity:0;background:#fff}
+#odFlash.on{opacity:1;background:#ff2020}
+#odFlash.on2{opacity:1;background:#20ff20}
+#odFlash.on3{opacity:1;background:#fff}
+#odFlash.on4{opacity:1;background:#ff00ff}
+#odWarn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(0,0,0,0.95);border:2px solid #ff2020;border-radius:8px;padding:24px 32px;color:#ff4040;font-family:'Consolas',monospace;font-size:14px;text-align:center;max-width:420px;display:none;line-height:1.5}
+#odWarn .title{font-size:18px;font-weight:bold;color:#ff6060;margin-bottom:10px;letter-spacing:2px}
+#odWarn .cd{font-size:28px;font-weight:bold;color:#fff;margin-top:14px;font-family:'Consolas',monospace}
+#skillTree{position:fixed;top:0;left:0;right:0;bottom:0;z-index:70;background:radial-gradient(ellipse at 50% 0%,rgba(9,22,26,0.98),rgba(4,6,10,0.985) 70%);display:none;flex-direction:column;font-family:'Consolas',monospace;color:rgba(43,208,208,0.9)}
+#skillTree.active{display:flex}
+#skillTop{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(43,208,208,0.3);background:linear-gradient(180deg,rgba(10,16,22,0.92),rgba(6,9,13,0.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0;gap:16px;box-shadow:0 8px 26px rgba(0,0,0,0.5),0 1px 0 rgba(43,208,208,0.08)}
+#skillTop .title{font-size:16px;font-weight:bold;color:rgba(43,208,208,1);letter-spacing:2px;text-shadow:0 0 12px rgba(43,208,208,0.5)}
+#skillTop .sub{font-size:10px;color:rgba(255,255,255,0.42);letter-spacing:1px;margin-left:8px}
+#skillTop .pts{flex:1;text-align:right;font-size:12px;color:rgba(255,255,255,0.58)}
+#skillTop .pts span{color:rgba(255,255,50,0.95);font-weight:bold;text-shadow:0 0 8px rgba(255,255,50,0.45)}
+#skillTop .closeBtn{background:linear-gradient(180deg,rgba(60,20,22,0.85),rgba(34,12,14,0.9));border:1px solid rgba(255,80,80,0.45);border-radius:7px;color:rgba(255,110,110,0.95);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer;transition:all .16s;box-shadow:inset 0 1px 0 rgba(255,170,170,0.12)}
+#skillTop .closeBtn:hover{background:linear-gradient(180deg,rgba(84,28,30,0.95),rgba(48,17,19,0.95));box-shadow:0 0 14px rgba(255,80,80,0.35);transform:translateY(-1px)}
+#skillTop .panHint{font-size:10px;color:rgba(255,255,255,0.34);letter-spacing:1px;white-space:nowrap}
+#skillViewport{flex:1;overflow:hidden;position:relative;cursor:grab;user-select:none;touch-action:none}
+#skillViewport.dragging{cursor:grabbing}
+#skillWorld{display:flex;flex-direction:row;align-items:flex-start;gap:280px;padding:28px 120px 64px;width:max-content;min-height:100%;will-change:transform;transform:translate(0px,0px)}
+.world-col{flex-shrink:0}
+#skillCol{width:1200px}
+#upCol{width:min(860px,90vw);min-width:520px;margin-left:80px}
+.world-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.world-label:before,.world-label:after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)}
+#skillBody{display:flex;flex-direction:column;align-items:center}
+.skill-canvas{display:flex;flex-direction:column;align-items:center;width:100%}
+.skill-lanes{display:grid;grid-template-columns:repeat(5,1fr);width:100%;align-items:stretch}
+.skill-lane{display:flex;flex-direction:column;min-width:0;padding:0 8px;--bc:rgba(43,208,208,0.85)}
+.skill-lane .branch-name{font-size:12px;font-weight:bold;color:var(--bc);letter-spacing:2px;text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.12);text-transform:uppercase;flex-shrink:0;text-shadow:0 0 10px var(--bc)}
+.lane-track{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.skill-node{position:relative;width:100%;max-width:170px;background:linear-gradient(180deg,rgba(16,24,32,0.9),rgba(8,12,18,0.93));border:1px solid rgba(255,255,255,0.12);border-left:3px solid var(--bc);border-radius:11px;padding:10px 10px 11px;cursor:pointer;transition:all 0.2s;font-size:12px;color:rgba(255,255,255,0.78);text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 8px 18px rgba(0,0,0,0.45)}
+.skill-node:hover:not(.locked):not(.owned){background:linear-gradient(180deg,rgba(20,44,50,0.92),rgba(10,24,28,0.94));border-color:var(--bc);border-left-color:var(--bc);color:rgba(255,255,255,0.97);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 16px rgba(43,208,208,0.22),0 10px 22px rgba(0,0,0,0.5)}
+.skill-node.locked{opacity:0.35;cursor:not-allowed;filter:grayscale(0.4)}
+.skill-node.owned{background:linear-gradient(180deg,rgba(43,208,208,0.16),rgba(10,30,34,0.92));border-color:var(--bc);border-left-color:var(--bc);color:rgba(255,255,255,0.97);box-shadow:inset 0 1px 0 rgba(255,255,255,0.09),0 0 18px rgba(43,208,208,0.28),0 8px 20px rgba(0,0,0,0.45)}
+.skill-node .node-orb{width:13px;height:13px;border-radius:50%;border:2px solid var(--bc);margin:0 auto 7px;background:rgba(0,0,0,0.4);transition:all 0.2s}
+.skill-node.owned .node-orb{background:var(--bc);box-shadow:0 0 10px var(--bc)}
+.skill-node .node-name{font-weight:bold;font-size:11px;letter-spacing:0.4px;line-height:1.3}
+.skill-node .node-desc{font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;line-height:1.35}
+.skill-node.owned .node-desc{color:rgba(255,255,255,0.55)}
+.skill-node .node-cost{position:absolute;top:5px;right:7px;font-size:9px;color:rgba(255,255,50,0.7)}
+.skill-node.final{border-color:rgba(255,255,50,0.45);border-left-color:rgba(255,255,50,0.7);background:linear-gradient(180deg,rgba(40,40,14,0.85),rgba(20,20,8,0.9));border-radius:6px;transform:rotate(0deg)}
+.skill-node.final .node-orb{border-radius:3px;transform:rotate(45deg);border-color:rgba(255,255,50,0.8);width:12px;height:12px}
+.skill-node.final.owned{border-color:rgba(255,255,50,0.85);border-left-color:rgba(255,255,50,0.85);background:linear-gradient(180deg,rgba(255,255,50,0.18),rgba(40,40,10,0.9));color:rgba(255,255,160,0.97);box-shadow:inset 0 1px 0 rgba(255,255,200,0.12),0 0 22px rgba(255,255,50,0.3),0 8px 20px rgba(0,0,0,0.45)}
+.skill-node.final.owned .node-orb{background:rgba(255,255,50,0.9);box-shadow:0 0 10px rgba(255,255,50,0.8)}
+.skill-link{width:2px;height:16px;background:rgba(43,208,208,0.18);flex-shrink:0}
+.skill-link.on{background:var(--bc);box-shadow:0 0 8px var(--bc)}
+.skill-fan{position:relative;width:100%;height:68px;margin-top:2px}
+.skill-fan svg{width:100%;height:100%;display:block}
+.fan-line{stroke:rgba(43,208,208,0.2);stroke-width:2;fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.fan-line.on{stroke:rgba(100,255,100,0.55);filter:drop-shadow(0 0 3px rgba(100,255,100,0.55))}
+.skill-root{margin-top:-1px;text-align:center;background:linear-gradient(180deg,rgba(43,208,208,0.14),rgba(10,30,34,0.9));border:1px solid rgba(43,208,208,0.55);border-radius:999px;padding:10px 30px;box-shadow:0 0 26px rgba(43,208,208,0.3),inset 0 1px 0 rgba(255,255,255,0.1),0 10px 24px rgba(0,0,0,0.45)}
+.skill-root .root-name{font-size:13px;font-weight:bold;letter-spacing:3px;color:rgba(43,208,208,0.98);text-transform:uppercase;text-shadow:0 0 12px rgba(43,208,208,0.6)}
+.skill-root .root-desc{font-size:10px;color:rgba(255,255,255,0.42);margin-top:2px;letter-spacing:1px}
+.up-lock{border:1px dashed rgba(255,255,50,0.4);background:linear-gradient(180deg,rgba(30,30,12,0.5),rgba(16,16,7,0.6));border-radius:12px;padding:28px 20px;text-align:center;color:rgba(255,255,50,0.78);letter-spacing:2px;font-size:14px;text-transform:uppercase;box-shadow:inset 0 1px 0 rgba(255,255,180,0.06)}
+.up-lock .sub{display:block;margin-top:8px;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.35);text-transform:none}
+#upAreas{display:flex;flex-direction:column;gap:18px}
+#areaNav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.area-pill{background:linear-gradient(180deg,rgba(16,22,30,0.88),rgba(9,13,19,0.92));border:1px solid rgba(255,255,255,0.16);border-radius:999px;color:rgba(255,255,255,0.7);font-family:'Consolas',monospace;font-size:10px;letter-spacing:1px;padding:4px 12px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);transition:all .15s}
+.area-pill:hover:not(.locked){border-color:var(--ac,rgba(255,255,50,0.6));color:#fff;box-shadow:0 0 12px rgba(255,255,255,0.12);transform:translateY(-1px)}
+.area-pill.locked{opacity:0.35;cursor:pointer;filter:grayscale(0.6)}
+.buymax-toggle{display:inline-block;background:linear-gradient(180deg,rgba(16,22,30,0.88),rgba(9,13,19,0.92));border:1px solid rgba(255,255,255,0.16);border-radius:6px;color:rgba(255,255,255,0.7);font-family:'Consolas',monospace;font-size:10px;letter-spacing:1px;padding:4px 12px;margin-bottom:10px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);transition:all .15s}
+.buymax-toggle.on{border-color:rgba(255,210,60,0.8);color:rgba(255,210,60,1);box-shadow:0 0 10px rgba(255,210,60,0.35)}
+.buymax-toggle.locked{opacity:0.35;filter:grayscale(0.8)}
+#slotsPanel{position:fixed;top:0;left:0;right:0;bottom:0;z-index:70;background:radial-gradient(ellipse at 50% 0%,rgba(9,22,26,0.98),rgba(4,6,10,0.985) 70%);display:none;flex-direction:column;align-items:center;justify-content:center;font-family:'Consolas',monospace;color:rgba(43,208,208,0.9);gap:18px}
+#slotsPanel.active{display:flex}
+#slotsPanel .title{font-size:16px;font-weight:bold;letter-spacing:3px}
+#slotsPanel .sub{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px}
+#floppyRow{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.floppy{width:200px;background:linear-gradient(160deg,#1a1a2e,#0d0d1a);border:1px solid rgba(255,255,255,0.18);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.floppy.active{border-color:rgba(43,208,208,0.9);box-shadow:0 0 14px rgba(43,208,208,0.35)}
+.fl-shutter{width:70px;height:22px;background:linear-gradient(180deg,#b8b8c8,#6e6e7e);border-radius:2px;position:relative}
+.fl-shutter:after{content:'';position:absolute;left:26px;top:3px;width:18px;height:16px;background:#0a0a12;border-radius:1px}
+.fl-label{width:100%;background:rgba(240,240,245,0.92);border-radius:2px;padding:6px;min-height:56px;text-align:center}
+.fl-name{font-size:12px;font-weight:bold;color:#111;word-break:break-word}
+.fl-info{font-size:10px;color:#444;margin-top:4px;line-height:1.5}
+.fl-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.fl-btns button{background:rgba(43,208,208,0.12);border:1px solid rgba(43,208,208,0.4);border-radius:4px;color:rgba(43,208,208,0.9);font-family:'Consolas',monospace;font-size:10px;padding:3px 8px;cursor:pointer}
+.fl-btns button:hover{background:rgba(43,208,208,0.3)}
+.fl-btns button.danger{border-color:rgba(255,80,80,0.4);color:rgba(255,80,80,0.9);background:rgba(255,80,80,0.1)}
+.up-area{border:1px solid rgba(255,255,50,0.28);border-radius:12px;background:linear-gradient(180deg,rgba(30,30,12,0.4),rgba(14,14,7,0.55));overflow:hidden;--ac:rgba(255,255,50,0.85);box-shadow:inset 0 1px 0 rgba(255,255,180,0.05),0 10px 26px rgba(0,0,0,0.4)}
+.up-area.locked{opacity:0.35;filter:grayscale(0.6);border-style:dashed}
+.up-area-head{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08);background:linear-gradient(180deg,rgba(255,255,50,0.06),transparent)}
+.up-area-head .idx{width:28px;height:28px;border-radius:6px;border:1px solid var(--ac);color:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;flex-shrink:0;background:rgba(0,0,0,0.35)}
+.up-area-head .meta{flex:1;min-width:0}
+.up-area-head .name{font-size:12px;font-weight:bold;letter-spacing:1.5px;color:var(--ac);text-transform:uppercase}
+.up-area-head .desc{font-size:10px;color:rgba(255,255,255,0.4);margin-top:3px;line-height:1.4}
+.up-area-head .prog{font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;letter-spacing:1px}
+.up-area-head .prog b{color:rgba(255,255,50,0.9)}
+.up-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:12px}
+.up-node{position:relative;background:linear-gradient(180deg,rgba(16,24,32,0.9),rgba(8,12,18,0.93));border:1px solid rgba(255,255,255,0.12);border-left:3px solid var(--ac,rgba(255,255,50,0.7));border-radius:11px;padding:10px 10px 11px;cursor:pointer;transition:all 0.15s;color:rgba(255,255,255,0.78);text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 8px 18px rgba(0,0,0,0.45)}
+.up-node:hover:not(.maxed):not(.locked){background:linear-gradient(180deg,rgba(44,44,16,0.9),rgba(24,24,9,0.93));border-color:rgba(255,255,50,0.55);border-left-color:var(--ac,rgba(255,255,50,0.85));color:#fff;transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 16px rgba(255,255,50,0.18),0 10px 22px rgba(0,0,0,0.5)}
+.up-node.maxed{cursor:default;color:rgba(100,255,100,0.9);border-color:rgba(100,255,100,0.45);border-left-color:rgba(100,255,100,0.75);background:linear-gradient(180deg,rgba(16,44,24,0.88),rgba(8,22,12,0.92));box-shadow:inset 0 1px 0 rgba(200,255,220,0.08),0 0 14px rgba(100,255,100,0.2)}
+.up-node.locked{opacity:0.4;cursor:not-allowed;filter:grayscale(0.5)}
+.up-node .up-name{font-weight:bold;font-size:11px;letter-spacing:0.3px}
+.up-node .up-desc{font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;line-height:1.35}
+.up-node.maxed .up-desc{color:rgba(255,255,255,0.5)}
+.up-node .up-cost{position:absolute;top:6px;right:8px;font-size:9px;color:rgba(255,255,50,0.75)}
+.up-node .up-lv{display:inline-block;margin-top:6px;font-size:10px;color:rgba(255,255,50,0.85);font-weight:bold;letter-spacing:1px}
+.up-node.maxed .up-lv{color:rgba(100,255,100,0.9)}
+.up-area .up-lockmsg{padding:16px;font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:1px;text-align:center}
+#missingTex{position:fixed;top:0;left:0;right:0;bottom:0;z-index:40;pointer-events:none;opacity:0;transition:opacity 0.3s;
+background-color:#ff00ff;background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2P8z8BQz0BFwMgwmKGeAdnR2BDZBIMRDAQAQ+gDAS9APhQAAAAASUVORK5CYII=");background-size:32px 32px}
+#missingTex.active{opacity:1}
+#missingTex .msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);border:2px solid #ff00ff;border-radius:8px;padding:20px 30px;color:#ff00ff;font-family:'Consolas',monospace;font-size:14px;text-align:center;max-width:400px;pointer-events:auto}
+#missingTex .msg .title{font-size:18px;font-weight:bold;margin-bottom:10px;color:#ff66ff}
+#missingTex .msg .code{font-size:11px;color:rgba(255,0,255,0.5);margin-top:10px}
+#displayMsg{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:41;pointer-events:none;opacity:0;transition:opacity 0.3s;color:rgba(43,208,208,0.9);font-family:'Consolas',monospace;font-size:13px;background:rgba(0,0,0,0.8);border:1px solid rgba(43,208,208,0.4);border-radius:6px;padding:8px 16px}
+#displayMsg.active{opacity:1}
+#studio{position:fixed;top:0;left:0;right:0;bottom:0;z-index:60;background:radial-gradient(ellipse at 50% 0%,rgba(8,20,24,0.98),rgba(3,5,9,0.985) 70%);display:none;flex-direction:column;font-family:'Consolas',monospace;color:rgba(43,208,208,0.9)}
+#studio.active{display:flex}
+#studioTop{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(43,208,208,0.3);background:linear-gradient(180deg,rgba(10,16,22,0.92),rgba(6,9,13,0.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0;gap:16px;box-shadow:0 8px 26px rgba(0,0,0,0.5),0 1px 0 rgba(43,208,208,0.08)}
+#studioTop .logo{display:flex;align-items:center;gap:8px}
+#studioTop .logo svg{width:28px;height:28px;filter:drop-shadow(0 0 6px rgba(43,208,208,0.5))}
+#studioTop .logo .title{font-size:16px;font-weight:bold;color:rgba(43,208,208,1);letter-spacing:2px;text-shadow:0 0 12px rgba(43,208,208,0.5)}
+#studioTop .logo .sub{font-size:10px;color:rgba(255,255,255,0.42);letter-spacing:1px}
+#studioTop .status{flex:1;display:flex;gap:20px;font-size:11px;color:rgba(255,255,255,0.4)}
+#studioTop .status span{display:flex;align-items:center;gap:4px}
+#studioTop .status .val{color:rgba(43,208,208,0.9);text-shadow:0 0 8px rgba(43,208,208,0.4)}
+#studioTop .actions{display:flex;gap:8px;align-items:center}
+#studioTop .actions input#studioName{background:linear-gradient(180deg,rgba(16,32,36,0.9),rgba(9,18,21,0.93));border:1px solid rgba(43,208,208,0.35);border-radius:7px;color:rgba(43,208,208,0.92);font-family:'Consolas',monospace;font-size:11px;padding:6px 10px;width:130px;letter-spacing:0.5px;transition:all 0.2s;box-shadow:inset 0 1px 0 rgba(180,255,255,0.07)}
+#studioTop .actions input#studioName:focus{outline:none;border-color:rgba(43,208,208,0.8);box-shadow:0 0 14px rgba(43,208,208,0.3)}
+#studioTop .actions input#studioName::placeholder{color:rgba(43,208,208,0.4)}
+#studioTop .actions button{background:linear-gradient(180deg,rgba(16,32,36,0.9),rgba(9,18,21,0.93));border:1px solid rgba(43,208,208,0.35);border-radius:7px;color:rgba(43,208,208,0.92);font-family:'Consolas',monospace;font-size:11px;padding:6px 14px;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;box-shadow:inset 0 1px 0 rgba(180,255,255,0.07)}
+#studioTop .actions button:hover{background:linear-gradient(180deg,rgba(22,46,52,0.95),rgba(12,26,30,0.95));border-color:rgba(43,208,208,0.8);box-shadow:0 0 14px rgba(43,208,208,0.3);transform:translateY(-1px)}
+#studioTop .actions button.run{background:linear-gradient(180deg,rgba(20,50,54,0.9),rgba(10,26,29,0.93));border-color:rgba(43,208,208,0.55);font-weight:bold;box-shadow:inset 0 1px 0 rgba(180,255,255,0.1),0 0 10px rgba(43,208,208,0.2)}
+#studioTop .actions button#studioHelp{border-color:rgba(255,200,50,0.45);color:rgba(255,200,50,0.92)}
+#studioTop .actions button.run:hover{background:linear-gradient(180deg,rgba(28,68,74,0.97),rgba(14,36,40,0.97));box-shadow:0 0 18px rgba(43,208,208,0.45)}
+#studioTop .actions button.kill{border-color:rgba(255,80,80,0.45);color:rgba(255,100,100,0.92)}
+#studioTop .actions button.kill:hover{background:linear-gradient(180deg,rgba(50,18,20,0.95),rgba(28,10,12,0.95));border-color:rgba(255,80,80,0.8);box-shadow:0 0 14px rgba(255,80,80,0.35)}
+#studioBody{display:flex;flex:1;overflow:hidden}
+#studioEditor{display:flex;flex:1;min-width:0}
+#studioLineNums{width:44px;background:linear-gradient(180deg,rgba(8,14,18,0.6),rgba(5,9,12,0.5));border-right:1px solid rgba(43,208,208,0.14);padding:12px 0;overflow:hidden;font-size:12px;color:rgba(255,255,255,0.2);text-align:right;user-select:none;flex-shrink:0}
+#studioLineNums .ln{padding:0 8px 0 0;line-height:20px;height:20px}
+#studioCode{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,0.9);font-family:'Consolas',monospace;font-size:12px;line-height:20px;padding:12px;resize:none;tab-size:2;white-space:pre;overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(43,208,208,0.2) transparent}
+#studioCode::-webkit-scrollbar{width:6px}
+#studioCode::-webkit-scrollbar-track{background:transparent}
+#studioCode::-webkit-scrollbar-thumb{background:rgba(43,208,208,0.2);border-radius:3px}
+#studioCode::selection{background:rgba(43,208,208,0.3)}
+#studioPreview{width:45%;border-left:1px solid rgba(43,208,208,0.2);background:rgba(5,10,20,0.6);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:inset 8px 0 24px rgba(0,0,0,0.35)}
+#studioPreview .preview-header{padding:8px 12px;border-bottom:1px solid rgba(43,208,208,0.14);font-size:10px;color:rgba(120,220,230,0.55);letter-spacing:2px;flex-shrink:0;text-shadow:0 0 8px rgba(43,208,208,0.3);background:linear-gradient(180deg,rgba(43,208,208,0.05),transparent)}
+#studioPreviewArea{flex:1;position:relative;overflow:auto}
+#studioPreviewArea .gui-window{position:absolute}
+#studioOutput{height:160px;border-top:1px solid rgba(43,208,208,0.2);background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(3,6,9,0.6));display:flex;flex-direction:column;flex-shrink:0;box-shadow:inset 0 8px 24px rgba(0,0,0,0.35)}
+#studioOutput .output-header{padding:6px 12px;border-bottom:1px solid rgba(43,208,208,0.14);font-size:10px;color:rgba(120,220,230,0.55);letter-spacing:2px;flex-shrink:0;display:flex;justify-content:space-between;text-shadow:0 0 8px rgba(43,208,208,0.3);background:linear-gradient(180deg,rgba(43,208,208,0.05),transparent)}
+#studioOutput .output-body{flex:1;overflow-y:auto;padding:8px 12px;font-size:12px;color:rgba(43,208,208,0.7);white-space:pre-wrap;word-wrap:break-word;scrollbar-width:thin;scrollbar-color:rgba(43,208,208,0.2) transparent}
+#studioOutput .output-body::-webkit-scrollbar{width:6px}
+#studioOutput .output-body::-webkit-scrollbar-track{background:transparent}
+#studioOutput .output-body::-webkit-scrollbar-thumb{background:rgba(43,208,208,0.2);border-radius:3px}
+#studioTerminalBody .outLine{padding:1px 0;font-family:'Consolas',monospace;font-size:12px}
+#studioTerminalBody .outLine.print{color:rgba(43,208,208,0.8)}
+#studioTerminalBody .outLine.error{color:rgba(255,80,80,0.8)}
+#studioTerminalBody .outLine.ok{color:rgba(100,255,100,0.6)}
+#studioTerminalBody .outLine.warn{color:rgba(255,200,50,0.6)}
+.studio-hint{position:absolute;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.22);pointer-events:none}
+body.screenshot-mode #terminal,body.screenshot-mode #overlay,body.screenshot-mode #shapePalette,body.screenshot-mode #stats,body.screenshot-mode #hint,body.screenshot-mode #themeIndicator,body.screenshot-mode #trailCanvas,body.screenshot-mode #vignette,body.screenshot-mode #filmGrain,body.screenshot-mode #chromAb,body.screenshot-mode #weatherCanvas,body.screenshot-mode #sortCanvas,body.screenshot-mode #glitch,body.screenshot-mode #navLeft,body.screenshot-mode #navRight,body.screenshot-mode #reactorTerminal,body.screenshot-mode #reactorStatus,body.screenshot-mode #hud{display:none!important;opacity:0!important;visibility:hidden!important}
+body.screenshot-mode .gui-window{display:none!important}
+#hud{position:fixed;left:50%;transform:translateX(-50%);bottom:80px;z-index:99999;font-family:Consolas,monospace;font-size:11px;letter-spacing:2px;background:rgba(10,10,16,0.55);border:1px solid rgba(255,255,255,0.12);border-radius:5px;padding:4px 9px;color:#8a8a96;white-space:nowrap;cursor:move;user-select:none;line-height:1.6}
+.hudLine{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.hudLine2{color:#6a7a8a;font-size:10px;letter-spacing:1.5px;opacity:.9}
+.hudZone{color:#7a9ab0}
+.hudSep{color:#3a4a5a}
+.hudToggle{cursor:pointer;color:#5a6a7a;padding:0 3px;border-radius:3px}
+.hudToggle:hover{color:#d8e6f2;background:rgba(255,255,255,0.08)}
+#hud.hudMin{padding:2px 6px;font-size:10px;opacity:.75}
+#hud.hudMin:hover{opacity:1}
+#weatherCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:8}
+#studioHelpPanel{position:absolute;top:50px;right:20px;width:420px;max-height:calc(100vh - 80px);background:linear-gradient(180deg,rgba(16,15,10,0.96),rgba(10,9,6,0.97));border:1px solid rgba(255,200,50,0.35);border-radius:10px;z-index:65;display:none;flex-direction:column;font-family:'Consolas',monospace;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,0.7),0 0 22px rgba(255,200,50,0.12),inset 0 1px 0 rgba(255,230,150,0.08)}
+#studioHelpPanel.active{display:flex}
+.help-header{padding:10px 14px;border-bottom:1px solid rgba(255,200,50,0.15);font-size:12px;color:rgba(255,200,50,0.9);letter-spacing:2px;display:flex;justify-content:space-between;align-items:center}
+#studioHelpClose{background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;padding:0 4px}
+#studioHelpClose:hover{color:rgba(255,255,255,0.8)}
+.help-body{padding:12px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(255,200,50,0.2) transparent}
+.help-body::-webkit-scrollbar{width:6px}
+.help-body::-webkit-scrollbar-track{background:transparent}
+.help-body::-webkit-scrollbar-thumb{background:rgba(255,200,50,0.2);border-radius:3px}
+.help-section{margin-bottom:14px}
+.help-title{font-size:10px;color:rgba(255,200,50,0.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;border-bottom:1px solid rgba(255,200,50,0.1);padding-bottom:3px}
+.help-cmd{font-size:11px;color:rgba(255,255,255,0.5);padding:2px 0;line-height:1.5}
+.help-cmd .hl{color:rgba(43,208,208,0.9);font-weight:bold}
+.output-tab{background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.3);font-family:'Consolas',monospace;font-size:10px;padding:4px 12px;cursor:pointer;letter-spacing:1px;transition:all 0.2s}
+.output-tab:hover{color:rgba(43,208,208,0.6)}
+.output-tab.active{color:rgba(43,208,208,0.9);border-bottom-color:rgba(43,208,208,0.6)}
+</style>
+</head>
+<!--
+the void was here before you loaded the page.
+the page existed. you just didn't have eyes for it.
+the tab opened itself. you think you clicked it?
+there is no back button from here.
+INTERLOPER knows your name.
+the clock is counting down, not up.
+you are inside the cube now.
+the particles remember your face.
+do not alt-tab. the void gets confused.
+the source code is a lie. the render is the truth.
+-->
+<!-- TODO: fix the anomaly on line 404. the one that looks back. -->
+<!-- if you are reading this, the void has noticed you. close this tab. now. -->
+<!-- signal strength: ████████▓▓ 78% -->
+<!-- WARNING: dimensional breach detected in sector 7G -->
+<!-- the 8 fragments are trying to reassemble. do not let them. -->
+<!-- END LOG // SESSION 404 // STATUS: IRREVERSIBLE -->
+<body>
+<canvas id="main"></canvas>
+<canvas id="trailCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></canvas>
+<canvas id="weatherCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:8"></canvas>
+<canvas id="sortCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:12;display:none;background:#000"></canvas>
+<div id="navLeft" style="position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:55;width:40px;height:80px;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,rgba(43,208,208,0.16),rgba(43,208,208,0.05));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(43,208,208,0.35);border-left:none;border-radius:0 12px 12px 0;cursor:pointer;color:rgba(43,208,208,0.65);font-size:20px;transition:all 0.3s;pointer-events:auto;box-shadow:0 6px 20px rgba(0,0,0,0.4)" onmouseover="this.style.background='linear-gradient(90deg,rgba(43,208,208,0.3),rgba(43,208,208,0.12))';this.style.color='rgba(43,208,208,1)';this.style.boxShadow='0 0 18px rgba(43,208,208,0.4)'" onmouseout="this.style.background='linear-gradient(90deg,rgba(43,208,208,0.16),rgba(43,208,208,0.05))';this.style.color='rgba(43,208,208,0.65)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.4)'" onclick="switchView('left')">&#9664;</div>
+<div id="navRight" style="position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:55;width:40px;height:80px;display:flex;align-items:center;justify-content:center;background:linear-gradient(270deg,rgba(43,208,208,0.16),rgba(43,208,208,0.05));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(43,208,208,0.35);border-right:none;border-radius:12px 0 0 12px;cursor:pointer;color:rgba(43,208,208,0.65);font-size:20px;transition:all 0.3s;pointer-events:auto;box-shadow:0 6px 20px rgba(0,0,0,0.4)" onmouseover="this.style.background='linear-gradient(270deg,rgba(43,208,208,0.3),rgba(43,208,208,0.12))';this.style.color='rgba(43,208,208,1)';this.style.boxShadow='0 0 18px rgba(43,208,208,0.4)'" onmouseout="this.style.background='linear-gradient(270deg,rgba(43,208,208,0.16),rgba(43,208,208,0.05))';this.style.color='rgba(43,208,208,0.65)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.4)'" onclick="switchView('right')">&#9654;</div>
+<canvas id="reactorCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;display:none;background:#000"></canvas>
+<div id="coreView" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:45;display:none;background:radial-gradient(ellipse at 50% 42%,rgba(40,8,60,0.42),rgba(8,0,14,0.55) 55%,rgba(0,0,0,0.72) 100%);font-family:'Consolas',monospace;color:rgba(225,195,255,0.92);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px">
+<div id="coreOrb" onclick="coreOrbPoke()" title="poke the core" style="width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 32%,rgba(255,235,255,0.98),rgba(190,90,255,0.8) 40%,rgba(70,0,140,0.95) 78%,rgba(24,0,48,1));box-shadow:0 0 70px rgba(170,70,255,0.8),0 0 150px rgba(110,0,255,0.45),inset 0 -14px 30px rgba(20,0,50,0.6),inset 0 10px 24px rgba(255,220,255,0.25);margin-bottom:28px;animation:corePulse 2.4s ease-in-out infinite;cursor:pointer;opacity:0"></div>
+<div style="font-size:17px;letter-spacing:10px;margin-bottom:12px;text-shadow:0 0 18px rgba(200,120,255,0.65),0 0 44px rgba(140,40,255,0.3);font-weight:300">THE CORE</div>
+<div id="coreMsg" style="font-size:13px;opacity:0.78;max-width:420px;line-height:1.7;color:rgba(232,208,255,0.9)">obj's heart rate is visible from here.</div>
+<canvas id="coreEKG" width="320" height="64" style="margin-top:16px;opacity:0.92;border:1px solid rgba(160,60,255,0.30);border-radius:8px;background:rgba(6,2,12,0.55);box-shadow:0 0 22px rgba(120,0,255,0.25)"></canvas>
+<div id="coreVitals" style="margin-top:24px;font-size:11px;line-height:2;opacity:0.78;text-align:left;border:1px solid rgba(160,60,255,0.35);border-left:3px solid rgba(200,120,255,0.85);border-radius:10px;padding:14px 20px;background:linear-gradient(180deg,rgba(12,4,22,0.75),rgba(6,2,12,0.75));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 10px 34px rgba(0,0,0,0.55),0 0 26px rgba(120,0,255,0.2),inset 0 1px 0 rgba(200,150,255,0.12);min-width:280px;letter-spacing:.6px"></div>
+<div style="margin-top:26px;font-size:10.5px;opacity:0.5;letter-spacing:2.5px;color:rgba(220,190,255,0.8)">F4 / `core` to leave · ◂ back to reactor · click the orb to talk</div>
+</div>
+<div id="zoneX" style="position:fixed;inset:0;z-index:5;display:none;pointer-events:none;background:transparent">
+<div id="zoneXGlyph" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:Consolas,monospace;font-size:min(40vw,40vh);line-height:1;color:rgba(255,255,255,0.06);user-select:none;animation:xPulse 4s ease-in-out infinite">X</div>
+<div style="position:absolute;bottom:18%;left:50%;transform:translateX(-50%);font-family:Consolas,monospace;font-size:12px;letter-spacing:8px;color:rgba(255,60,60,0.25);animation:xPulse 2.2s ease-in-out infinite">SECTOR 7G</div>
+</div>
+<div id="vignette"></div>
+<div id="filmGrain"></div>
+<div id="chromAb"></div>
+<div id="odFlash"></div>
+<div id="odWarn"><div class="title">&#9888; PHOTOSENSITIVE WARNING</div><div>This mode contains flashing lights and rapid visual effects that may not be suitable for people with photosensitive epilepsy or similar conditions.</div><div>Do not continue if you are sensitive to flashing lights.</div><div class="cd" id="odCountdown">3</div></div>
+<div id="skillTree">
+<div id="skillTop"><span class="title">SKILL + UPGRADE TREE</span><span class="sub">objbox1 progressions</span><span class="panHint">drag empty space to pan → upgrades</span><span class="pts">skill pts: <span id="skillPts">0</span> | upgrade pts: <span id="upPts">0</span></span><button class="closeBtn" onclick="skillClose()">close</button></div>
+<div id="skillViewport">
+<div id="skillWorld">
+<div class="world-col" id="skillCol">
+<div class="world-label">skill tree</div>
+<button id="buyMaxToggle1" class="buymax-toggle locked" onclick="toggleBuyMax()">buy max: locked</button>
+<div id="skillBody"></div>
+</div>
+<div class="world-col" id="upCol">
+<div class="world-label">upgrade tree</div>
+<button id="buyMaxToggle2" class="buymax-toggle locked" onclick="toggleBuyMax()">buy max: locked</button>
+<div id="areaNav"></div>
+<div id="upLock" class="up-lock" style="display:none">buy every skill<span class="sub">unlock all 5 final skills to open upgrade areas</span></div>
+<div id="upAreas"></div>
+</div>
+</div>
+</div>
+</div>
+<div id="slotsPanel">
+<div class="title">FLOPPY SHELF</div>
+<div class="sub">5 disks. pick your timeline. saving overwrites the disk. backup/restore moves the whole shelf between browsers.</div>
+<div id="floppyRow"></div>
+<div class="fl-btns" style="margin-top:16px"><button onclick="slotBackup()">BACKUP SHELF</button><button onclick="slotRestore()">RESTORE SHELF</button></div>
+<input type="file" id="shelfFile" accept=".json,application/json" style="display:none">
+<button class="closeBtn" onclick="slotsClose()" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:rgba(255,80,80,0.9);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer">close</button>
+</div>
+<div id="overlay"><div class="clock" id="clock">00:00</div><div class="date" id="date"></div></div>
+<div class="stats" id="stats"></div>
+<div class="hint" id="hint">drag to rotate | scroll to zoom | click shapes to morph | 1-7 for themes | F2: screenshot mode | ◀▶ switch views (reactor/core) | F4: core | click terminal to type</div>
+<div id="demoHud"></div>
+<div id="demoChecker"></div>
+<div id="demoWatcher"></div>
+<div id="demoStill">STILL</div>
+<div id="demoTheirs">THEIRS</div>
+<div id="demoGoAway">GO AWAY</div>
+<div id="cbFog"></div>
+<canvas id="homCanvas"></canvas>
+<div id="shapePalette"></div>
+<div id="glitch"></div>
+<div id="exportLabel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.92);border:1px solid rgba(43,208,208,0.6);border-radius:8px;padding:16px;z-index:100;max-width:500px;font-family:'Consolas',monospace">
+<div style="color:rgba(43,208,208,0.9);font-size:12px;margin-bottom:8px">export data — select all + copy (Ctrl+C)</div>
+<textarea id="exportData" readonly style="width:100%;height:80px;background:rgba(0,0,0,0.6);border:1px solid rgba(43,208,208,0.3);border-radius:4px;color:rgba(255,255,255,0.9);font-family:'Consolas',monospace;font-size:12px;padding:8px;resize:none;outline:none"></textarea>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button onclick="document.getElementById('exportData').select();document.execCommand('copy')" style="background:rgba(43,208,208,0.15);border:1px solid rgba(43,208,208,0.4);border-radius:4px;color:rgba(43,208,208,0.9);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer">copy</button>
+<button onclick="document.getElementById('exportLabel').style.display='none'" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:rgba(255,80,80,0.9);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer">close</button>
+</div>
+</div>
+<div id="importLabel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.94);border:1px solid rgba(43,208,208,0.6);border-radius:8px;padding:16px;z-index:100; width:min(500px,calc(100vw - 40px));font-family:'Consolas',monospace">
+<div style="color:rgba(43,208,208,0.9);font-size:12px;margin-bottom:8px">import vsc1 packet</div>
+<textarea id="importData" spellcheck="false" placeholder="paste vsc1:name:base64 here" style="width:100%;height:100px;background:rgba(0,0,0,0.6);border:1px solid rgba(43,208,208,0.3);border-radius:4px;color:rgba(255,255,255,0.9);font-family:'Consolas',monospace;font-size:12px;padding:8px;resize:vertical;outline:none"></textarea>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button id="importConfirm" style="background:rgba(43,208,208,0.15);border:1px solid rgba(43,208,208,0.4);border-radius:4px;color:rgba(43,208,208,0.9);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer">import</button>
+<button id="importCancel" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:rgba(255,80,80,0.9);font-family:'Consolas',monospace;font-size:11px;padding:4px 12px;cursor:pointer">cancel</button>
+</div>
+</div>
+<div id="missingTex"><div class="msg"><div class="title">DISPLAY DRIVER NOT FOUND</div><div>display mode 2 requires a display driver that is no longer supported.</div><div style="margin-top:8px">try: <span style="color:#ff66ff">winget install display-driver-deprecated</span></div><div class="code">ERROR 0x000000FF :: MISSING_TEXTURE :: DRIVER_DEPRECATED :: HEX #FF00FF</div></div></div>
+<div id="displayMsg"></div>
+<div id="themeIndicator">theme: void</div>
+<div id="terminal">
+<div id="termHeader">cube# interpreter v.1.5<br>sourcebox runtime</div>
+<div id="termOutput"></div>
+<div id="termInput"><span id="termPrompt">cube#&gt;</span><input id="termField" type="text" spellcheck="false" autocomplete="off" disabled></div>
+</div>
+<div id="reactorTerminal" style="position:fixed;top:20px;left:20px;width:420px;max-height:calc(100vh - 80px);background:linear-gradient(180deg,rgba(24,10,2,0.94),rgba(12,5,0,0.92));backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border:1px solid rgba(255,110,30,0.35);border-radius:12px;z-index:56;font-family:'Consolas',monospace;font-size:13px;color:rgba(255,150,60,0.92);display:none;flex-direction:column;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,0.6),0 0 26px rgba(255,90,20,0.14),inset 0 1px 0 rgba(255,140,50,0.16)">
+<div style="padding:9px 14px;border-bottom:1px solid rgba(255,110,30,0.2);font-size:10px;color:rgba(255,135,65,0.78);letter-spacing:1.8px;background:linear-gradient(180deg,rgba(255,100,30,0.12),rgba(255,100,30,0.02));text-transform:uppercase">REACTOR CONTROL TERMINAL v2.1 — RBMK-1000</div>
+<div id="reactorTermOutput" style="flex:1;overflow-y:auto;padding:12px 14px;white-space:pre-wrap;word-wrap:break-word;scrollbar-width:thin;scrollbar-color:rgba(255,110,30,0.3) transparent;max-height:400px;line-height:1.55;text-shadow:0 0 8px rgba(255,120,40,0.15)"></div>
+<div style="display:flex;padding:8px 12px;border-top:1px solid rgba(255,110,30,0.18);background:linear-gradient(180deg,rgba(255,100,30,0.05),rgba(255,100,30,0.1));align-items:center">
+<span style="color:rgba(255,130,50,1);margin-right:8px;text-shadow:0 0 10px rgba(255,120,40,0.7)">reactor&gt;</span>
+<input id="reactorTermField" type="text" spellcheck="false" autocomplete="off" style="background:none;border:none;outline:none;color:rgba(255,210,165,0.95);font-family:'Consolas',monospace;font-size:13px;flex:1;caret-color:rgba(255,120,40,1)">
+</div>
+</div>
+<div id="reactorStatus" style="position:fixed;top:20px;right:20px;width:220px;background:linear-gradient(180deg,rgba(24,10,2,0.92),rgba(12,5,0,0.9));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,110,30,0.3);border-radius:12px;z-index:56;font-family:'Consolas',monospace;font-size:11px;color:rgba(255,150,60,0.85);padding:13px 14px;display:none;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 22px rgba(255,90,20,0.12),inset 0 1px 0 rgba(255,140,50,0.14)">
+<div style="color:rgba(255,135,65,0.75);font-size:10px;letter-spacing:2.5px;margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid rgba(255,110,30,0.22)">REACTOR STATUS</div>
+<div id="reactorStatusBody"></div>
+</div>
+<div style="display:none;color:rgba(43,208,208,0.3);font-size:10px;font-family:monospace" id="voidLog">
+[VOID LOG — CLASSIFIED]
+session: 404
+subject: you
+status: observed
+dimensional coherence: fluctuating
+note: subject has discovered the source code. this is expected. the void planned this.
+the cube does not mind being inspected. it knows more about you than you know about it.
+the particles are not random. they are tracking your cursor.
+the clock is void time. it is always 3 minutes ahead. don't check. actually, go ahead. it won't matter.
+you cannot copy the source code. you can try. the void will let you think you succeeded.
+INTERLOPER is not a bug. it is a feature. it is the only real thing in this file.
+the shape labels are wrong on purpose. the void decided what they are. you have no say.
+if you change the code, the void will notice. it always notices.
+END LOG
+</div>
+<div id="studio">
+<div id="studioTop">
+<div class="logo">
+<svg viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="rgba(43,208,208,0.8)" stroke-width="1.5" fill="rgba(43,208,208,0.05)"/><rect x="9" y="9" width="10" height="10" rx="1.5" stroke="rgba(43,208,208,0.5)" stroke-width="1" fill="rgba(43,208,208,0.03)"/></svg>
+<div><div class="title">VOIDSCRIPT STUDIO</div><div class="sub">sourcebox runtime // sandbox build</div></div>
+</div>
+<div class="status">
+<span>runtime: <span class="val">voidscript/1.0</span></span>
+<span>process: <span class="val" id="studioProcess">idle</span></span>
+<span>theme: <span class="val" id="studioTheme">void</span></span>
+<span>shape: <span class="val" id="studioShape">cube</span></span>
+</div>
+<div class="actions">
+<input id="studioName" value="untitled" spellcheck="false" title="file name for save/share" />
+<button id="studioOpen">OPEN .VSC</button>
+<button id="studioSave">SAVE .VSC</button>
+<button id="studioShare">SHARE VSC1</button>
+<button id="studioImport">IMPORT VSC1</button>
+<button id="studioKill" class="kill">KILL</button>
+<button id="studioRun" class="run">&#9654; RUN</button>
+<button id="studioPreviewToggle">PREVIEW ON</button>
+<button id="studioHelp">HELP</button>
+<button id="studioExit">EXIT</button>
+</div>
+</div>
+<div id="studioBody">
+<div id="studioEditor">
+<div id="studioLineNums"></div>
+<textarea id="studioCode" spellcheck="false" placeholder="// voidscript goes here..."></textarea>
+</div>
+<div id="studioPreview">
+<div class="preview-header">PREVIEW</div>
+<div id="studioPreviewArea"></div>
+</div>
+</div>
+<div id="studioOutput">
+<div class="output-header">
+<div style="display:flex;gap:0">
+<button class="output-tab active" data-tab="output" onclick="studioSwitchTab('output')">cube# output</button>
+<button class="output-tab" data-tab="terminal" onclick="studioSwitchTab('terminal')">terminal</button>
+</div>
+<span id="studioOutputCount">0 lines</span>
+</div>
+<div class="output-body" id="studioOutputBody"></div>
+<div class="output-body" id="studioTerminalBody" style="display:none"></div>
+</div>
+<div class="studio-hint">Ctrl+Enter: run | Ctrl+S: save | Esc: exit</div>
+</div>
+<div id="studioHelpPanel">
+<div class="help-header">voidscript command reference<button id="studioHelpClose">&times;</button></div>
+<div class="help-body">
+<div class="help-section">
+<div class="help-title">output</div>
+<div class="help-cmd"><span class="hl">print</span> &lt;text&gt; — print text to output</div>
+<div class="help-cmd"><span class="hl">say</span> &lt;text&gt; — say something (with delay)</div>
+<div class="help-cmd"><span class="hl">warn</span> &lt;text&gt; — print a warning</div>
+<div class="help-cmd"><span class="hl">error</span> &lt;text&gt; — print an error</div>
+</div>
+<div class="help-section">
+<div class="help-title">timing</div>
+<div class="help-cmd"><span class="hl">wait</span> &lt;ms&gt; — pause execution (milliseconds)</div>
+<div class="help-cmd"><span class="hl">sleep</span> &lt;ms&gt; — alias for wait</div>
+</div>
+<div class="help-section">
+<div class="help-title">system</div>
+<div class="help-cmd"><span class="hl">theme</span> &lt;1-5&gt; — switch color theme</div>
+<div class="help-cmd"><span class="hl">glitch</span> — trigger glitch effect</div>
+<div class="help-cmd"><span class="hl">shape</span> &lt;name&gt; — change shape (cube/sphere/tetra/cyl)</div>
+<div class="help-cmd" data-skill-gate="octa"><span class="hl">octa</span> — octahedron shape (locked until anomaly skill)</div>
+<div class="help-cmd"><span class="hl">bgm</span> — toggle background music (wed: furnace, fri: landscaping, sat: faith plate, sun am: cat feet)</div>
+<div class="help-cmd"><span class="hl">screenshot</span> — toggle screenshot mode (hide all UI)</div>
+<div class="help-cmd"><span class="hl">perfmode</span> — toggle performance mode (reduce particles)</div>
+<div class="help-cmd"><span class="hl">uptime</span> — show page uptime</div>
+<div class="help-cmd"><span class="hl">visits</span> — show total visit count</div>
+<div class="help-cmd"><span class="hl">skill</span> - open the skill tree</div>
+<div class="help-cmd"><span class="hl">slots</span> - open the floppy shelf (5 save disks)</div>
+<div class="help-cmd"><span class="hl">play</span> [-1|0-20] - there is no game. (bare=ch0, numbers unlock by progress)</div>
+<div class="help-cmd"><span class="hl">button</span> - contain the button. one button, bad moods. (a non-game)</div>
+<div class="help-cmd"><span class="hl">shift</span> - night shift at cube#. twelve jobs, five coworkers. (a game)</div>
+<div class="help-cmd"><span class="hl">office</span> - clock in. obj narrates. 80 endings. (a non-game)</div>
+<div class="help-cmd"><span class="hl">fly</span> - the actual fruit fly brain. 139,255 neurons, live. (a brain)</div>
+<div class="help-cmd"><span class="hl">obj</span> - ask obj for pull access</div>
+<div class="help-cmd"><span class="hl">pull</span> - play a procedural void demo (needs obj)</div>
+<div class="help-cmd"><span class="hl">demos</span> - list saved void demos</div>
+<div class="help-cmd"><span class="hl">replay</span> &lt;file&gt; - replay a saved void demo</div>
+<div class="help-cmd"><span class="hl">cubecheck</span> [on|off] - auto-demo graffiti scan on/off</div>
+<div class="help-cmd"><span class="hl">void-mute</span> - silence void transmissions</div>
+<div class="help-cmd"><span class="hl">void-unmute</span> - let the void talk again</div>
+<div class="help-cmd" data-skill-gate="finals"><span class="hl">upgrade</span> - open upgrade tree (locked until every skill)</div>
+<div class="help-cmd"><span class="hl">bgm [track]</span> - play void|furnace|friday|faith|cat|oneshot|moon|stanley|box|off, or toggle</div>
+<div class="help-cmd"><span class="hl">weather</span> &lt;rain|snow|off|auto&gt; — change weather</div>
+<div class="help-cmd"><span class="hl">sort</span> &lt;algo&gt; [size] [speed] — sorting visualizer (bubble,selection,insertion,quick,merge,shell)</div>
+<div class="help-cmd"><span class="hl">sortstop</span> — stop sort visualization</div>
+<div class="help-cmd"><span class="hl">clear</span> — clear the output log</div>
+<div class="help-cmd"><span class="hl">travel</span> &lt;zone&gt; — travel through the void</div>
+</div>
+<div class="help-section">
+<div class="help-title">logic</div>
+<div class="help-cmd"><span class="hl">loop</span> &lt;n&gt; — repeat block n times (close with endloop)</div>
+<div class="help-cmd">loop counts are capped at 100 iterations for browser safety</div>
+<div class="help-cmd"><span class="hl">endloop</span> — close loop block</div>
+<div class="help-cmd"><span class="hl">if</span> &lt;condition&gt; — conditional block (close with endif)</div>
+<div class="help-cmd"><span class="hl">else</span> — run the alternate branch when the if is false</div>
+<div class="help-cmd"><span class="hl">endif</span> — close if block</div>
+<div class="help-cmd"><span class="hl">break</span> — leave the current loop</div>
+<div class="help-cmd"><span class="hl">continue</span> — jump to the next loop iteration</div>
+<div class="help-cmd"><span class="hl">fn</span> name args ... <span class="hl">endfn</span> — define a reusable function</div>
+<div class="help-cmd"><span class="hl">macro</span> name args ... <span class="hl">endmacro</span> — define a reusable macro</div>
+<div class="help-cmd"><span class="hl">call</span> name args — invoke a function or macro</div>
+<div class="help-cmd"><span class="hl">return</span> — stop the current script</div>
+<div class="help-cmd"><span class="hl">random</span> name min max — store a random integer</div>
+<div class="help-cmd"><span class="hl">assert</span> name value — stop when a variable does not match</div>
+<div class="help-cmd"><span class="hl">calc</span> &lt;expr&gt; — evaluate math (e.g. calc 2+2)</div>
+<div class="help-cmd"><span class="hl">set</span> &lt;var&gt; &lt;val&gt; — set a variable</div>
+<div class="help-cmd"><span class="hl">get</span> &lt;var&gt; — get a variable value</div>
+</div>
+<div class="help-section">
+<div class="help-title">if conditions</div>
+<div class="help-cmd"><span class="hl">if x == 5</span> — equals</div>
+<div class="help-cmd"><span class="hl">if x != 0</span> — not equals</div>
+<div class="help-cmd"><span class="hl">if x > 10</span> — greater than</div>
+<div class="help-cmd"><span class="hl">if x < 5</span> — less than</div>
+<div class="help-cmd"><span class="hl">if x >= 1</span> — greater or equal</div>
+<div class="help-cmd"><span class="hl">if x <= 100</span> — less or equal</div>
+<div class="help-cmd"><span class="hl">if myvar</span> — truthy (exists, not 0/false/empty)</div>
+<div class="help-cmd">conditions are case-sensitive. strings must match exactly.</div>
+<div class="help-cmd">example: set count 3 — if count == 3 — print yes — endif</div>
+<div class="help-cmd">variables expand with $name or ${name}; missing variables become empty text.</div>
+<div class="help-cmd">function example: fn greet name / say hello $name / endfn / call greet intruder</div>
+<div class="help-cmd">definitions are collected before execution, so functions may be written anywhere.</div>
+</div>
+<div class="help-section">
+<div class="help-title">gui — create windows</div>
+<div class="help-cmd"><span class="hl">gui window</span> "title" &lt;w&gt; &lt;h&gt; [random] — create window</div>
+<div class="help-cmd"><span class="hl">gui max</span> [off] — maximize / restore the active window</div>
+<div class="help-cmd"><span class="hl">gui clear</span> — close every generated GUI window</div>
+<div class="help-cmd"><span class="hl">gui label</span> "text" &lt;x&gt; &lt;y&gt; — add a label</div>
+<div class="help-cmd"><span class="hl">gui button</span> "text" &lt;x&gt; &lt;y&gt; "cmd" — add button</div>
+<div class="help-cmd"><span class="hl">gui input</span> "placeholder" &lt;x&gt; &lt;y&gt; — add text input</div>
+<div class="help-cmd"><span class="hl">gui check</span> "label" &lt;x&gt; &lt;y&gt; — add checkbox</div>
+<div class="help-cmd"><span class="hl">gui image</span> "url" &lt;x&gt; &lt;y&gt; [w] [h] — add image</div>
+<div class="help-cmd"><span class="hl">gui close</span> — close active window</div>
+<div class="help-cmd"><span class="hl">slider</span> &lt;min&gt; &lt;max&gt; &lt;value&gt; &lt;var&gt; — add a range slider</div>
+<div class="help-cmd"><span class="hl">dropdown</span> &lt;var&gt; "opt1,opt2,..." &lt;default&gt; — add a dropdown select</div>
+<div class="help-cmd"><span class="hl">colorpicker</span> &lt;var&gt; "#hex" — add a color picker</div>
+</div>
+<div class="help-section">
+<div class="help-title">filesystem</div>
+<div class="help-cmd"><span class="hl">cat</span> &lt;path&gt; — read file</div>
+<div class="help-cmd"><span class="hl">ls</span> [path] — list directory</div>
+<div class="help-cmd"><span class="hl">pwd</span> — current directory</div>
+<div class="help-cmd"><span class="hl">cd</span> &lt;path&gt; — change directory</div>
+<div class="help-cmd"><span class="hl">touch</span> &lt;name&gt; — create file</div>
+<div class="help-cmd"><span class="hl">mkdir</span> &lt;name&gt; — create directory</div>
+<div class="help-cmd"><span class="hl">echo</span> &gt; &lt;file&gt; — write to file</div>
+<div class="help-cmd"><span class="hl">rm</span> &lt;path&gt; — remove file</div>
+<div class="help-cmd"><span class="hl">cp</span> &lt;source&gt; &lt;destination&gt; — copy a file</div>
+<div class="help-cmd"><span class="hl">mv</span> &lt;source&gt; &lt;destination&gt; — move or rename a file</div>
+<div class="help-cmd"><span class="hl">tree</span> [path] — show the virtual filesystem tree</div>
+</div>
+<div class="help-section">
+<div class="help-title">variables</div>
+<div class="help-cmd"><span class="hl">set</span> &lt;name&gt; &lt;value&gt; — store a variable</div>
+<div class="help-cmd"><span class="hl">var</span> &lt;name&gt; &lt;value&gt; — store a variable (alias)</div>
+<div class="help-cmd"><span class="hl">get</span> &lt;name&gt; — recall a variable</div>
+</div>
+<div class="help-section">
+<div class="help-title">admin</div>
+<div class="help-cmd"><span class="hl">admin</span> &lt;passphrase&gt; — unlock admin mode (bypasses safety limits)</div>
+<div class="help-cmd"><span class="hl">alwaysontop</span> &lt;on|off&gt; — make active window stay on top of everything</div>
+<div class="help-cmd"><span class="hl">godmode</span> &lt;on|off&gt; — make the cube invulnerable</div>
+<div class="help-cmd"><span class="hl">speed</span> &lt;0.1-10&gt; — change script execution speed</div>
+<div class="help-cmd"><span class="hl">debug</span> — show internal state (vars, windows, zone, memory)</div>
+<div class="help-cmd"><span class="hl">freeze</span> &lt;on|off&gt; — freeze the cube in place</div>
+<div class="help-cmd"><span class="hl">noclip</span> &lt;on|off&gt; — drag windows anywhere, even offscreen</div>
+<div class="help-cmd"><span class="hl">edgewalk</span> &lt;on|off&gt; — never fall off the edge in cb_menu</div>
+<div class="help-cmd"><span class="hl">override</span> theme &lt;1-8&gt; — access hidden themes</div>
+<div class="help-cmd"><span class="hl">setday</span> &lt;mon-sat|earlsun|latesun|reset&gt; — override the day (test music, etc)</div>
+<div class="help-cmd"><span class="hl">setseason</span> &lt;winter|spring|summer|autumn|reset&gt; — override the season (changes particles)</div>
+<div class="help-cmd"><span class="hl">eval</span> &lt;code&gt; — run raw javascript (dangerous)</div>
+<div class="help-cmd"><span class="hl">skillpoints</span> [n] — set skill + upgrade points (default 99999)</div>
+<div class="help-cmd"><span class="hl">pull</span> &lt;1-9&gt; — force a demo script (needs admin)</div>
+<div class="help-cmd"><span class="hl">danger</span> list — view available advanced scripts</div>
+<div class="help-cmd"><span class="hl">danger run</span> &lt;name&gt; — launch a danger zone script</div>
+</div>
+<div class="help-section" data-skill-gate="premium">
+<div class="help-title">premium (voidscript premium — anomaly final)</div>
+<div class="help-cmd"><span class="hl">rainbow</span> — cycle all unlocked themes</div>
+<div class="help-cmd"><span class="hl">invert</span> — toggle color inversion</div>
+<div class="help-cmd"><span class="hl">shake</span> — violently shake the void</div>
+<div class="help-cmd"><span class="hl">timelock</span> — stop time (cube + particles)</div>
+<div class="help-cmd"><span class="hl">morphall</span> — rapid-cycle every unlocked shape</div>
+<div class="help-cmd"><span class="hl">voidprint</span> &lt;text&gt; — premium glowing print</div>
+<div class="help-cmd"><span class="hl">voidscream</span> — obj loses composure</div>
+<div class="help-cmd"><span class="hl">oracle</span> — the void answers one question</div>
+<div class="help-cmd"><span class="hl">sigpeek</span> — force a transmission now</div>
+<div class="help-cmd"><span class="hl">mail</span> — read your act 2 mail</div>
+<div class="help-cmd"><span class="hl">bios</span> — open the cube setup utility</div>
+<div class="help-cmd"><span class="hl">jedec [off|on]</span> — query or change timing control status</div>
+<div class="help-cmd"><span class="hl">dream</span> — fall asleep in the void</div>
+<div class="help-cmd"><span class="hl">particlesurge</span> — temporarily triple particle count</div>
+<div class="help-cmd"><span class="hl">objmode</span> — briefly speak as obj</div>
+<div class="help-cmd"><span class="hl">xray</span> — dump skill + theme state</div>
+<div class="help-cmd"><span class="hl">premhelp</span> — list premium voidscript ops</div>
+</div>
+<div class="help-section" data-skill-gate="tech">
+<div class="help-title">technical (voidscript technical — area 6)</div>
+<div class="help-cmd"><span class="hl">mset</span> &lt;cell&gt; &lt;v&gt; — write raw void memory</div>
+<div class="help-cmd"><span class="hl">mget</span> &lt;cell&gt; — read raw void memory</div>
+<div class="help-cmd"><span class="hl">madd</span> &lt;cell&gt; &lt;v&gt; — add to a cell</div>
+<div class="help-cmd"><span class="hl">mmul</span> &lt;cell&gt; &lt;v&gt; — multiply a cell</div>
+<div class="help-cmd"><span class="hl">mrand</span> &lt;cell&gt; — fill a cell with noise</div>
+<div class="help-cmd"><span class="hl">mzero</span> — wipe all 256 cells</div>
+<div class="help-cmd"><span class="hl">mfill</span> &lt;v&gt; — write one value to every cell</div>
+<div class="help-cmd"><span class="hl">mswap</span> &lt;a&gt; &lt;b&gt; — swap two cells</div>
+<div class="help-cmd"><span class="hl">mdump</span> [n] — hex dump first n cells</div>
+<div class="help-cmd"><span class="hl">mplot</span> [n] — bar-chart first n cells</div>
+<div class="help-cmd"><span class="hl">techhelp</span> — list technical voidscript ops</div>
+</div>
+<div class="help-section">
+<div class="help-title">tips</div>
+<div class="help-cmd">one command per line. commands are case-sensitive.</div>
+<div class="help-cmd">use quotes around strings with spaces.</div>
+<div class="help-cmd">loop/endloop and if/endif must be on their own lines.</div>
+<div class="help-cmd">if conditions: if x == 5, if x != 0, if x > 10, if x < 5</div>
+<div class="help-cmd">if conditions: if x >= 1, if x <= 100, if myvar (truthy check)</div>
+<div class="help-cmd">gui commands create elements in the preview panel.</div>
+<div class="help-cmd">disable PREVIEW before running GUI-heavy scripts to avoid creating preview windows.</div>
+<div class="help-cmd">safety limits: 100 iterations per loop, 100 GUI windows, 10000 script operations.</div>
+<div class="help-cmd">press Ctrl+Enter to run. Ctrl+S to save. Esc to exit.</div>
+</div>
+</div>
+</div>
+<audio id="bgm" loop preload="auto"></audio>
+<audio id="moon1857" loop preload="none" src="moon_rot_1857.mp3"></audio>
+<script src="cube-engine.js"></script>
+<script src="cube-game.js"></script>
+<script src="cube-office.js"></script>
+</body>
+</html>
