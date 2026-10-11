@@ -1,2 +1,2 @@
 # objbox-archive
-all versions of objbox
+all commits from the github.com/iluxz/objbox repo, legacy, all versions are downloadable. see license.
